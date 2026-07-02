@@ -29,6 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.thesmallmarket.arrumacomigo.ui.components.CelebrationOverlay
 import com.thesmallmarket.arrumacomigo.ui.history.HistoryScreen
 import com.thesmallmarket.arrumacomigo.ui.people.PeopleScreen
 import com.thesmallmarket.arrumacomigo.ui.rooms.RoomsScreen
@@ -59,24 +60,28 @@ fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass) {
         }
     }
 
-    if (expanded) {
-        Row(Modifier.fillMaxSize()) {
-            AppNavigationRail(currentRoute, onSelectTop)
-            // Sem Scaffold neste ramo: o padding evita o conteúdo (snackbar, botões)
-            // atrás da barra de navegação do sistema no modo edge-to-edge.
-            Box(Modifier.fillMaxSize().navigationBarsPadding()) {
-                AppNavHost(navController, twoPane = true)
+    Box(Modifier.fillMaxSize()) {
+        if (expanded) {
+            Row(Modifier.fillMaxSize()) {
+                AppNavigationRail(currentRoute, onSelectTop)
+                // Sem Scaffold neste ramo: o padding evita o conteúdo (snackbar, botões)
+                // atrás da barra de navegação do sistema no modo edge-to-edge.
+                Box(Modifier.fillMaxSize().navigationBarsPadding()) {
+                    AppNavHost(navController, twoPane = true)
+                }
+            }
+        } else {
+            Scaffold(
+                bottomBar = { AppBottomBar(currentRoute, onSelectTop) },
+                containerColor = MaterialTheme.colorScheme.background,
+            ) { padding ->
+                Box(Modifier.fillMaxSize().padding(padding)) {
+                    AppNavHost(navController, twoPane = false)
+                }
             }
         }
-    } else {
-        Scaffold(
-            bottomBar = { AppBottomBar(currentRoute, onSelectTop) },
-            containerColor = MaterialTheme.colorScheme.background,
-        ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
-                AppNavHost(navController, twoPane = false)
-            }
-        }
+        // Confete em tela cheia (+ vibração e plim) a cada conclusão, acima de tudo.
+        CelebrationOverlay(Modifier.fillMaxSize())
     }
 }
 

@@ -51,6 +51,8 @@ import com.thesmallmarket.arrumacomigo.data.entity.RoomType
 import com.thesmallmarket.arrumacomigo.data.template.RoomTemplates
 import com.thesmallmarket.arrumacomigo.ui.AppViewModelProvider
 import com.thesmallmarket.arrumacomigo.ui.RoomDetailUi
+import androidx.compose.runtime.LaunchedEffect
+import com.thesmallmarket.arrumacomigo.ui.components.CelebrationBus
 import com.thesmallmarket.arrumacomigo.ui.components.NeoButton
 import com.thesmallmarket.arrumacomigo.ui.components.NeoCard
 import com.thesmallmarket.arrumacomigo.ui.components.NeoIconButton
@@ -70,6 +72,11 @@ fun RoomsScreen(
     val selectedId by viewModel.selectedId.collectAsStateWithLifecycle()
     val detail by viewModel.selectedRoom.collectAsStateWithLifecycle()
     var showCreate by remember { mutableStateOf(false) }
+
+    // Comemoração global (confete em tela cheia + vibração + plim) a cada conclusão.
+    LaunchedEffect(Unit) {
+        viewModel.completedEvents.collect { CelebrationBus.celebrate() }
+    }
 
     Box(modifier.fillMaxSize().padding(horizontal = 24.dp)) {
         if (twoPane) {

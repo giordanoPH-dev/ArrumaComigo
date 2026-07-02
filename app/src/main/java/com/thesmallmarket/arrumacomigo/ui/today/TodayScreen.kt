@@ -23,6 +23,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -42,9 +43,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.ui.AppViewModelProvider
 import com.thesmallmarket.arrumacomigo.ui.TaskCardUi
+import com.thesmallmarket.arrumacomigo.ui.components.CelebrationBus
 import com.thesmallmarket.arrumacomigo.ui.components.PersonPickerDialog
 import com.thesmallmarket.arrumacomigo.ui.components.SectionHeader
 import com.thesmallmarket.arrumacomigo.ui.components.TaskCard
+import kotlinx.coroutines.withTimeoutOrNull
 import com.thesmallmarket.arrumacomigo.ui.weekdayShortLabels
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -68,16 +71,19 @@ fun TodayScreen(
     val isToday = state.selectedDate == state.today
     val isPast = state.selectedDate.isBefore(state.today)
 
-    // Snackbar "Desfazer" após concluir uma tarefa.
+    // Comemoração global (confete + vibração + plim) e snackbar "Desfazer" por 2s.
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 is TodayEvent.TaskCompleted -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = "\"${event.title}\" concluída 🎉",
-                        actionLabel = "Desfazer",
-                        withDismissAction = true,
-                    )
+                    CelebrationBus.celebrate()
+                    val result = withTimeoutOrNull(2_000) {
+                        snackbarHostState.showSnackbar(
+                            message = "\"${event.title}\" concluída 🎉",
+                            actionLabel = "Desfazer",
+                            duration = SnackbarDuration.Indefinite,
+                        )
+                    }
                     if (result == SnackbarResult.ActionPerformed) viewModel.undoComplete(event.taskId)
                 }
             }

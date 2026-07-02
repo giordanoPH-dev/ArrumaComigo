@@ -13,7 +13,9 @@ import com.thesmallmarket.arrumacomigo.ui.TaskCardUi
 import com.thesmallmarket.arrumacomigo.ui.currentDateFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -96,6 +98,10 @@ class RoomsViewModel(
     /** Tarefas com operação de conclusão em andamento, para ignorar toques duplos. */
     private val inFlight = mutableSetOf<Long>()
 
+    /** Emitido a cada conclusão, para a comemoração (confete + vibração) na tela. */
+    private val _completedEvents = MutableSharedFlow<Long>(extraBufferCapacity = 8)
+    val completedEvents: SharedFlow<Long> = _completedEvents
+
     /** Alterna entre concluída e não concluída (mesmo comportamento da tela Hoje). */
     fun toggle(item: TaskCardUi) {
         if (!inFlight.add(item.task.id)) return
@@ -107,6 +113,7 @@ class RoomsViewModel(
                 } else {
                     val updated = repository.completeTask(item.task)
                     if (updated != null) scheduler.schedule(updated) else scheduler.cancel(item.task.id)
+                    _completedEvents.tryEmit(item.task.id)
                 }
             } finally {
                 inFlight.remove(item.task.id)
