@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Arruma Comigo</string>
+    <string name="notification_channel_name">Lembretes de tarefas</string>
+    <string name="notification_channel_description">Avisos de tarefas domésticas que estão vencendo</string>
+</resources>
