@@ -1,11 +1,14 @@
 package com.thesmallmarket.arrumacomigo.data.repository
 
 import com.thesmallmarket.arrumacomigo.data.RecurrenceCalculator
+import com.thesmallmarket.arrumacomigo.data.entity.PendingDelete
 import com.thesmallmarket.arrumacomigo.data.entity.Person
+import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.RoomType
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
+import com.thesmallmarket.arrumacomigo.data.local.PendingDeleteDao
 import com.thesmallmarket.arrumacomigo.data.local.PersonDao
 import com.thesmallmarket.arrumacomigo.data.local.RoomDao
 import com.thesmallmarket.arrumacomigo.data.local.TaskCompletionDao
@@ -19,35 +22,60 @@ class OfflineHouseholdRepository(
     private val roomDao: RoomDao,
     private val taskDao: TaskDao,
     private val completionDao: TaskCompletionDao,
+    private val pendingDeleteDao: PendingDeleteDao,
 ) : HouseholdRepository {
+
+    /** Ligado pelo AppContainer ao SyncEngine — dispara um sync após cada mutação. */
+    var onMutated: (() -> Unit)? = null
+
+    private fun now() = System.currentTimeMillis()
+
+    private inline fun <T> mutate(block: () -> T): T = block().also { onMutated?.invoke() }
 
     // Pessoas
     override fun people(): Flow<List<Person>> = personDao.getAll()
     override fun person(id: Long): Flow<Person?> = personDao.getById(id)
     override suspend fun peopleCount(): Int = personDao.count()
-    override suspend fun upsertPerson(person: Person): Long =
-        if (person.id == 0L) personDao.insert(person) else { personDao.update(person); person.id }
-    override suspend fun deletePerson(person: Person) = personDao.delete(person)
+    override suspend fun upsertPerson(person: Person): Long = mutate {
+        val stamped = person.copy(updatedAt = now(), pendingSync = true)
+        if (stamped.id == 0L) personDao.insert(stamped) else { personDao.update(stamped); stamped.id }
+    }
+    override suspend fun deletePerson(person: Person) = mutate {
+        pendingDeleteDao.insertAll(listOf(PendingDelete(person.uuid, PendingDelete.PEOPLE)))
+        personDao.delete(person)
+    }
 
     // Cômodos
     override fun rooms(): Flow<List<RoomEntity>> = roomDao.getAll()
     override fun room(id: Long): Flow<RoomEntity?> = roomDao.getById(id)
     override suspend fun roomsCount(): Int = roomDao.count()
-    override suspend fun upsertRoom(room: RoomEntity): Long =
-        if (room.id == 0L) roomDao.insert(room) else { roomDao.update(room); room.id }
-    override suspend fun deleteRoom(room: RoomEntity) = roomDao.delete(room)
+    override suspend fun upsertRoom(room: RoomEntity): Long = mutate {
+        val stamped = room.copy(updatedAt = now(), pendingSync = true)
+        if (stamped.id == 0L) roomDao.insert(stamped) else { roomDao.update(stamped); stamped.id }
+    }
+    override suspend fun deleteRoom(room: RoomEntity) = mutate {
+        // O CASCADE local vai apagar tasks e completions do cômodo — tombstona todo mundo no remoto.
+        val taskUuids = taskDao.uuidsByRoom(room.id)
+        val completionUuids = completionDao.uuidsByRoom(room.id)
+        pendingDeleteDao.insertAll(
+            completionUuids.map { PendingDelete(it, PendingDelete.TASK_COMPLETIONS) } +
+                taskUuids.map { PendingDelete(it, PendingDelete.TASKS) } +
+                PendingDelete(room.uuid, PendingDelete.ROOMS)
+        )
+        roomDao.delete(room)
+    }
 
     override suspend fun createRoomWithTasks(
         name: String,
         type: RoomType,
         taskTitles: List<String>,
         firstDueDate: LocalDate,
-    ): Long {
-        val roomId = roomDao.insert(RoomEntity(name = name, type = type))
+    ): Long = mutate {
+        val roomId = roomDao.insert(RoomEntity(name = name, type = type, updatedAt = now()))
         taskTitles.forEach { title ->
-            taskDao.insert(Task(roomId = roomId, title = title, nextDueDate = firstDueDate))
+            taskDao.insert(Task(roomId = roomId, title = title, nextDueDate = firstDueDate, updatedAt = now()))
         }
-        return roomId
+        roomId
     }
 
     // Tarefas
@@ -59,12 +87,20 @@ class OfflineHouseholdRepository(
         taskDao.getTodayView(date, date.atStartOfDay())
     override fun task(id: Long): Flow<Task?> = taskDao.getById(id)
     override suspend fun taskOnce(id: Long): Task? = taskDao.getByIdOnce(id)
-    override suspend fun upsertTask(task: Task): Long =
-        if (task.id == 0L) taskDao.insert(task) else { taskDao.update(task); task.id }
-    override suspend fun deleteTask(task: Task) = taskDao.delete(task)
+    override suspend fun upsertTask(task: Task): Long = mutate {
+        val stamped = task.copy(updatedAt = now(), pendingSync = true)
+        if (stamped.id == 0L) taskDao.insert(stamped) else { taskDao.update(stamped); stamped.id }
+    }
+    override suspend fun deleteTask(task: Task) = mutate {
+        pendingDeleteDao.insertAll(
+            completionDao.uuidsByTask(task.id).map { PendingDelete(it, PendingDelete.TASK_COMPLETIONS) } +
+                PendingDelete(task.uuid, PendingDelete.TASKS)
+        )
+        taskDao.delete(task)
+    }
     override suspend fun tasksWithReminders(): List<Task> = taskDao.getTasksWithReminders()
 
-    override suspend fun completeTask(task: Task, completedAt: LocalDateTime): Task? {
+    override suspend fun completeTask(task: Task, completedAt: LocalDateTime): Task? = mutate {
         completionDao.insert(
             TaskCompletion(
                 taskId = task.id,
@@ -72,6 +108,7 @@ class OfflineHouseholdRepository(
                 taskTitle = task.title,
                 completedAt = completedAt,
                 dueDate = task.nextDueDate,
+                updatedAt = now(),
             )
         )
         val next = RecurrenceCalculator.next(
@@ -80,47 +117,55 @@ class OfflineHouseholdRepository(
             interval = task.recurrenceInterval,
             daysOfWeek = task.daysOfWeek,
         )
-        return if (next == null) {
-            taskDao.update(task.copy(isArchived = true))
+        if (next == null) {
+            taskDao.update(task.copy(isArchived = true, updatedAt = now(), pendingSync = true))
             null
         } else {
-            val updated = task.copy(nextDueDate = next)
+            val updated = task.copy(nextDueDate = next, updatedAt = now(), pendingSync = true)
             taskDao.update(updated)
             updated
         }
     }
 
-    override suspend fun uncompleteTask(task: Task, completion: TaskCompletion): Task {
+    override suspend fun uncompleteTask(task: Task, completion: TaskCompletion): Task = mutate {
+        pendingDeleteDao.insertAll(listOf(PendingDelete(completion.uuid, PendingDelete.TASK_COMPLETIONS)))
         completionDao.deleteById(completion.id)
         val reverted = task.copy(
             nextDueDate = completion.dueDate ?: task.nextDueDate,
             isArchived = false,
+            updatedAt = now(),
+            pendingSync = true,
         )
         taskDao.update(reverted)
-        return reverted
+        reverted
     }
 
-    override suspend fun skipTask(task: Task): Task? {
+    override suspend fun skipTask(task: Task): Task? = mutate {
         val next = RecurrenceCalculator.next(
             from = maxOf(task.nextDueDate, LocalDate.now()),
             recurrence = task.recurrence,
             interval = task.recurrenceInterval,
             daysOfWeek = task.daysOfWeek,
         )
-        return if (next == null) {
-            taskDao.update(task.copy(isArchived = true))
+        if (next == null) {
+            taskDao.update(task.copy(isArchived = true, updatedAt = now(), pendingSync = true))
             null
         } else {
-            val updated = task.copy(nextDueDate = next)
+            val updated = task.copy(nextDueDate = next, updatedAt = now(), pendingSync = true)
             taskDao.update(updated)
             updated
         }
     }
 
-    override suspend fun postponeTask(task: Task): Task {
-        val updated = task.copy(nextDueDate = LocalDate.now().plusDays(1))
+    override suspend fun postponeTask(task: Task): Task = mutate {
+        // Semanal com dias marcados: "amanhã" vira o próximo dia do padrão (não quebra a escala).
+        val tomorrow = LocalDate.now().plusDays(1)
+        val target = if (task.recurrence == Recurrence.WEEKLY && task.daysOfWeek != 0) {
+            RecurrenceCalculator.firstWeeklyOccurrence(tomorrow, task.daysOfWeek)
+        } else tomorrow
+        val updated = task.copy(nextDueDate = target, updatedAt = now(), pendingSync = true)
         taskDao.update(updated)
-        return updated
+        updated
     }
 
     // Histórico

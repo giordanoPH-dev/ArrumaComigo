@@ -5,7 +5,8 @@ Guia para o Claude Code ao trabalhar neste repositório.
 ## O que é o app
 **Arruma Comigo** — app Android **nativo para tablet** de gerenciamento de tarefas domésticas
 (família de apps "Comigo": Conta-Comigo, Nutre-Comigo). Tarefas por pessoa, cômodos com
-tarefas padrão por tipo, recorrência e lembretes por notificação. **100% local** (sem backend/login).
+tarefas padrão por tipo, recorrência e lembretes por notificação. **Offline-first** (sem login):
+Room é a fonte local reativa; sync opcional multi-dispositivo via **Supabase** (PostgREST puro).
 
 ## Stack
 - **Kotlin + Jetpack Compose** (Material 3), `minSdk = 26`, `targetSdk = 36`.
@@ -13,7 +14,13 @@ tarefas padrão por tipo, recorrência e lembretes por notificação. **100% loc
 - **DI manual** via `AppContainer` em `HouseholdApplication` (sem Hilt) — padrão dos codelabs Google.
 - **ViewModel + StateFlow**, `collectAsStateWithLifecycle`, fábrica em `ui/AppViewModelProvider.kt`.
 - **Navigation Compose** + `WindowSizeClass` adaptativo (NavigationRail em telas largas, bottom bar em estreitas).
-- **WorkManager** para lembretes (`notification/ReminderScheduler` + `ReminderWorker` + `BootReceiver`).
+- **WorkManager** para lembretes (`notification/ReminderScheduler` + `ReminderWorker` + `BootReceiver`)
+  e para o sync periódico de 15 min (`sync/SyncWorker`).
+- **Sync Supabase** em `sync/SyncEngine.kt` — sem SDK (HttpURLConnection + org.json contra PostgREST;
+  supabase-kt exigiria plugin de serialization, arriscado sob AGP 9 com Kotlin embutido). Push de linhas
+  `pendingSync=1` + tombstones (`pending_deletes` → `deleted=true` remoto); pull incremental por
+  `updated_at` com LWW. Credenciais em `sync/SyncConfig.kt` (vazias = app 100% local). Schema remoto
+  em `supabase/schema.sql` (sem FKs remotas; colunas com DEFAULT — ver comentários no arquivo).
 - Catálogo de versões em `gradle/libs.versions.toml`.
 
 ## Comandos
@@ -51,6 +58,7 @@ ui/          theme, components, navigation, today (calendário semanal com abas 
 - `RoomEntity` (cômodo) é nomeado assim para não colidir com `androidx.room.Room`.
 - Datas/horas (`java.time`) são salvas como strings ISO (ordenáveis) via `Converters`.
 - Tarefa recorrente: ao concluir, `completeTask` grava `TaskCompletion` e avança `nextDueDate` (ou arquiva se não-recorrente).
-- **Seed inicial**: `HouseSeeder.seedIfEmpty` popula o app na primeira abertura (banco vazio) com a rotina da casa descrita em `PLANO_CASA.md` (documento de domínio na raiz — fonte da escala Giordano/Amanda).
-- **Migração destrutiva**: `AppDatabase` (versão 2) usa `fallbackToDestructiveMigration(dropAllTables = true)` — mudar schema exige bump de versão e **apaga todos os dados** (o HouseSeeder reseeda em seguida).
-- Fora de escopo (futuro): rodízio automático, gamificação, sync multi-dispositivo (Supabase), lista de compras.
+- **Seed inicial**: `HouseSeeder.seedIfEmpty` popula o app na primeira abertura (banco vazio) com a rotina da casa descrita em `PLANO_CASA.md` (documento de domínio na raiz — fonte da escala Giordano/Amanda). Com sync configurado, o seed só roda **depois** de um pull bem-sucedido (device novo não duplica a casa).
+- **Migrações reais**: `AppDatabase` (versão 3) usa `addMigrations(...)` — os dados agora importam (são a fonte do sync). Mudar schema exige bump de versão + `Migration` nova; os `@ColumnInfo(defaultValue=...)` das colunas de sync precisam bater com o DDL da migração.
+- **Sync**: toda mutação do repositório carimba `updatedAt`/`pendingSync` e dispara `onMutated` → `SyncEngine.requestSync()`. Deletes gravam `PendingDelete` do registro **e dos filhos** que o CASCADE local apaga. Conflitos: last-write-wins por `updatedAt` (relógio do device).
+- Fora de escopo (futuro): rodízio automático, gamificação, lista de compras, realtime do Supabase (polling de 15 min basta; se incomodar, sync no `onStart` da MainActivity antes de considerar realtime).

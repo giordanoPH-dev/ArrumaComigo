@@ -1,5 +1,6 @@
 package com.thesmallmarket.arrumacomigo.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -18,7 +19,12 @@ import java.time.LocalDateTime
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("taskId"), Index("personId"), Index("completedAt")],
+    indices = [
+        Index("taskId"),
+        Index("personId"),
+        Index("completedAt"),
+        Index(value = ["uuid"], unique = true),
+    ],
 )
 data class TaskCompletion(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -30,4 +36,7 @@ data class TaskCompletion(
     val completedAt: LocalDateTime,
     /** Data de vencimento que a tarefa tinha ao ser concluída, para reverter ao desfazer. */
     val dueDate: LocalDate? = null,
+    @ColumnInfo(defaultValue = "") val uuid: String = newUuid(),
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0,
+    @ColumnInfo(defaultValue = "1") val pendingSync: Boolean = true,
 )

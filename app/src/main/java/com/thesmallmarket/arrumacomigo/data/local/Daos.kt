@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.thesmallmarket.arrumacomigo.data.entity.PendingDelete
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.Task
@@ -33,6 +34,23 @@ interface PersonDao {
 
     @Delete
     suspend fun delete(person: Person)
+
+    // Sync
+    @Query("SELECT * FROM people WHERE pendingSync = 1")
+    suspend fun getPending(): List<Person>
+
+    @Query("SELECT * FROM people WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): Person?
+
+    @Query("SELECT * FROM people WHERE id = :id")
+    suspend fun getByIdOnce(id: Long): Person?
+
+    /** Só limpa se ninguém editou durante o push (updatedAt inalterado). */
+    @Query("UPDATE people SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM people WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
 }
 
 @Dao
@@ -54,6 +72,22 @@ interface RoomDao {
 
     @Delete
     suspend fun delete(room: RoomEntity)
+
+    // Sync
+    @Query("SELECT * FROM rooms WHERE pendingSync = 1")
+    suspend fun getPending(): List<RoomEntity>
+
+    @Query("SELECT * FROM rooms WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): RoomEntity?
+
+    @Query("SELECT * FROM rooms WHERE id = :id")
+    suspend fun getByIdOnce(id: Long): RoomEntity?
+
+    @Query("UPDATE rooms SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM rooms WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
 }
 
 @Dao
@@ -98,6 +132,23 @@ interface TaskDao {
 
     @Delete
     suspend fun delete(task: Task)
+
+    // Sync
+    @Query("SELECT * FROM tasks WHERE pendingSync = 1")
+    suspend fun getPending(): List<Task>
+
+    @Query("SELECT * FROM tasks WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): Task?
+
+    @Query("UPDATE tasks SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM tasks WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
+
+    /** uuids das tarefas de um cômodo — para tombstonar os filhos que o CASCADE local apaga. */
+    @Query("SELECT uuid FROM tasks WHERE roomId = :roomId")
+    suspend fun uuidsByRoom(roomId: Long): List<String>
 }
 
 @Dao
@@ -121,4 +172,35 @@ interface TaskCompletionDao {
     /** Remove uma conclusão específica pela chave primária (usado ao desfazer). */
     @Query("DELETE FROM task_completions WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    // Sync
+    @Query("SELECT * FROM task_completions WHERE pendingSync = 1")
+    suspend fun getPending(): List<TaskCompletion>
+
+    @Query("SELECT * FROM task_completions WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): TaskCompletion?
+
+    @Query("UPDATE task_completions SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM task_completions WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
+
+    @Query("SELECT uuid FROM task_completions WHERE taskId = :taskId")
+    suspend fun uuidsByTask(taskId: Long): List<String>
+
+    @Query("SELECT uuid FROM task_completions WHERE taskId IN (SELECT id FROM tasks WHERE roomId = :roomId)")
+    suspend fun uuidsByRoom(roomId: Long): List<String>
+}
+
+@Dao
+interface PendingDeleteDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(deletes: List<PendingDelete>)
+
+    @Query("SELECT * FROM pending_deletes")
+    suspend fun getAll(): List<PendingDelete>
+
+    @Query("DELETE FROM pending_deletes WHERE uuid = :uuid")
+    suspend fun delete(uuid: String)
 }

@@ -1,5 +1,6 @@
 package com.thesmallmarket.arrumacomigo.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -27,7 +28,12 @@ import java.time.LocalTime
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("roomId"), Index("assignedPersonId"), Index("nextDueDate")],
+    indices = [
+        Index("roomId"),
+        Index("assignedPersonId"),
+        Index("nextDueDate"),
+        Index(value = ["uuid"], unique = true),
+    ],
 )
 data class Task(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -47,4 +53,7 @@ data class Task(
     val reminderTime: LocalTime? = null,
     val reminderEnabled: Boolean = false,
     val isArchived: Boolean = false,
+    @ColumnInfo(defaultValue = "") val uuid: String = newUuid(),
+    @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0,
+    @ColumnInfo(defaultValue = "1") val pendingSync: Boolean = true,
 )
