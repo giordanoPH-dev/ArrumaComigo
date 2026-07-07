@@ -79,7 +79,7 @@ fun RoomsScreen(
         viewModel.completedEvents.collect { CelebrationBus.celebrate() }
     }
 
-    Box(modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+    Box(modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         if (twoPane) {
             Row(Modifier.fillMaxSize()) {
                 RoomList(

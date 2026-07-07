@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -104,7 +105,7 @@ fun TodayScreen(
     val groups = buildGroups(visible, state.people, state.selectedPersonId)
 
     Box(modifier = modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
             DayHeader(
                 selectedDate = state.selectedDate,
                 today = state.today,
@@ -133,7 +134,7 @@ fun TodayScreen(
                 EmptyDay(isPast = isPast, isToday = isToday)
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 340.dp),
+                    columns = GridCells.Adaptive(minSize = 300.dp),
                     contentPadding = PaddingValues(vertical = NeumorphicEdgeInset, horizontal = 2.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -253,12 +254,15 @@ private fun DayHeader(
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
         )
         Spacer(Modifier.width(10.dp))
         Text(
             "· ${selectedDate.format(formatter)}",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         // Progresso do dia por pessoa ("🧔 3/5 · 👩 2/4") ou contagem simples.
@@ -276,6 +280,8 @@ private fun DayHeader(
             right,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

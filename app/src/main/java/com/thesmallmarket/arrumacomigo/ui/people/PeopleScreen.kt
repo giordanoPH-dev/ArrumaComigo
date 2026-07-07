@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.thesmallmarket.arrumacomigo.ui.people
 
 import androidx.compose.foundation.background
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -62,7 +65,7 @@ fun PeopleScreen(
     var editing by remember { mutableStateOf<Person?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+    Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         SectionHeader(
             title = "Pessoas",
             modifier = Modifier.padding(top = 28.dp, bottom = 12.dp),
@@ -151,14 +154,17 @@ private fun PersonEditorDialog(
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 NeoTextField(value = name, onValueChange = { name = it }, label = "Nome", modifier = Modifier.fillMaxWidth())
                 Text("Emoji", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    emojiChoices.take(6).forEach { e -> EmojiOption(e, e == emoji) { emoji = e } }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    emojiChoices.drop(6).forEach { e -> EmojiOption(e, e == emoji) { emoji = e } }
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    emojiChoices.forEach { e -> EmojiOption(e, e == emoji) { emoji = e } }
                 }
                 Text("Cor", style = MaterialTheme.typography.labelMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     PersonColors.forEach { hex -> ColorOption(hex, hex == colorHex) { colorHex = hex } }
                 }
             }

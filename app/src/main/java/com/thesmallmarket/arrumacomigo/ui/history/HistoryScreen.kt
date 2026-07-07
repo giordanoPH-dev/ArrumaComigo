@@ -44,7 +44,7 @@ fun HistoryScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val maxCount = state.balances.maxOfOrNull { it.count } ?: 1
 
-    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    Column(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
         Column(Modifier.padding(top = 28.dp, bottom = 8.dp)) {
             Text(
                 "Balanço",

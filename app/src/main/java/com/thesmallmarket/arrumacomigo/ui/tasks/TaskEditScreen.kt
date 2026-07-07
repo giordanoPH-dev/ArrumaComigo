@@ -146,7 +146,7 @@ fun TaskEditScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 16.dp),
     ) {
         Row(
             modifier = Modifier.padding(top = 28.dp, bottom = 16.dp),
