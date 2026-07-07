@@ -1,5 +1,6 @@
 package com.thesmallmarket.arrumacomigo.data.seed
 
+import com.thesmallmarket.arrumacomigo.data.RecurrenceCalculator
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.Priority
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
@@ -10,6 +11,7 @@ import com.thesmallmarket.arrumacomigo.data.repository.HouseholdRepository
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.DayOfWeek.THURSDAY
 import java.time.DayOfWeek.TUESDAY
@@ -18,14 +20,21 @@ import java.time.LocalDate
 
 /**
  * Popula o app, na primeira abertura, com a casa do Giordano e da Amanda seguindo a
- * "Rotina da Casa": um cômodo por dia para cada um, de domingo a sexta (sábado livre).
+ * "Rotina da Casa": zonas por dia de terça a domingo — segunda-feira é sempre livre.
  * Só roda com o banco vazio.
  *
  * Cadências (o dia da semana vem do weekday de [Task.nextDueDate]):
- * DAILY (todo dia), WEEKLY (toda semana), WEEKLY+interval 2 (quinzenal),
- * MONTHLY (mensal), MONTHLY+interval 3 (trimestral).
+ * WEEKLY (toda semana), WEEKLY+interval 2 (quinzenal), MONTHLY (mensal), DAILY (todo dia,
+ * inclusive segunda — usada nas tarefas realmente diárias, com interval 2 para "a cada 2 dias"),
+ * e WEEKLY com bitmask de 6 dias (terça a domingo) para as "quase-diárias" que pulam a segunda —
+ * não existe um modo DAILY-com-exceção no modelo (Recurrence.DAILY ignora daysOfWeek).
  */
 object HouseSeeder {
+
+    /** Terça a domingo — usado nas tarefas quase-diárias, que nunca caem na segunda. */
+    private val semDaSegunda = DayOfWeek.entries
+        .filter { it != MONDAY }
+        .fold(0) { mask, day -> RecurrenceCalculator.toggleDay(mask, day) }
 
     suspend fun seedIfEmpty(repo: HouseholdRepository) {
         if (repo.peopleCount() > 0 || repo.roomsCount() > 0) return
@@ -39,18 +48,20 @@ object HouseSeeder {
         suspend fun room(name: String, type: RoomType) = repo.upsertRoom(RoomEntity(name = name, type = type))
 
         val cozinha = room("Cozinha", RoomType.KITCHEN)
-        val quartoCasal = room("Quarto do Casal", RoomType.BEDROOM)
         val salaEstar = room("Sala de Estar", RoomType.LIVING_ROOM)
         val salaJantar = room("Sala de Jantar", RoomType.LIVING_ROOM)
-        val banheiroCasal = room("Banheiro do Casal", RoomType.BATHROOM)
         val lavabo = room("Lavabo", RoomType.BATHROOM)
-        val escritorio = room("Escritório", RoomType.OFFICE)
-        val quartoGuto = room("Quarto do Guto", RoomType.KIDS_ROOM)
         val lavanderia = room("Lavanderia", RoomType.LAUNDRY)
-        val banheiroVisitas = room("Banheiro de Visitas", RoomType.BATHROOM)
+        val quartoCasal = room("Quarto do Casal", RoomType.BEDROOM)
+        val banheiroCasal = room("Banheiro do Casal", RoomType.BATHROOM)
         val quartoVisitas = room("Quarto de Visitas", RoomType.BEDROOM)
-        val fundos = room("Fundos (cães)", RoomType.OUTDOOR)
-        val casaToda = room("Geral — Casa toda", RoomType.OTHER)
+        val banheiroVisitas = room("Banheiro de Visitas", RoomType.BATHROOM)
+        val quartoAugusto = room("Quarto do Augusto", RoomType.KIDS_ROOM)
+        val escritorio = room("Escritório", RoomType.OFFICE)
+        val garagem = room("Garagem", RoomType.GARAGE)
+        val fundos = room("Fundos", RoomType.OUTDOOR)
+        val jardim = room("Jardim", RoomType.OUTDOOR)
+        val geral = room("Geral", RoomType.OTHER)
 
         // --- Helper para adicionar tarefas ---
         suspend fun add(
@@ -60,10 +71,11 @@ object HouseSeeder {
             recurrence: Recurrence,
             day: DayOfWeek? = null,
             interval: Int = 1,
+            daysOfWeek: Int = 0,
             priority: Priority = Priority.MEDIUM,
         ) {
             val due = when {
-                recurrence == Recurrence.DAILY -> today
+                daysOfWeek != 0 -> RecurrenceCalculator.firstWeeklyOccurrence(today, daysOfWeek)
                 day != null -> nextOnOrAfter(today, day)
                 else -> today
             }
@@ -74,6 +86,7 @@ object HouseSeeder {
                     assignedPersonId = person,
                     recurrence = recurrence,
                     recurrenceInterval = interval,
+                    daysOfWeek = daysOfWeek,
                     nextDueDate = due,
                     priority = priority,
                 )
@@ -84,78 +97,94 @@ object HouseSeeder {
         val weekly = Recurrence.WEEKLY
         val monthly = Recurrence.MONTHLY
 
-        // --- DIÁRIAS (todos os dias) ---
-        add(fundos, "Dar comida aos cães (manhã e noite)", giordano, daily, priority = Priority.HIGH)
-        add(fundos, "Recolher cocô e limpar xixi (fundos)", giordano, daily, priority = Priority.HIGH)
-        add(cozinha, "Tirar o lixo orgânico quando cheio", giordano, daily)
-        add(quartoCasal, "Arrumar a cama", amanda, daily, priority = Priority.LOW)
-        add(quartoCasal, "Organizar o quarto do casal", amanda, daily, priority = Priority.LOW)
+        // --- TERÇA · Banheiros (chão+vaso=Giordano, resto=Amanda) + Garagem ---
+        add(lavabo, "Limpar chão", giordano, weekly, TUESDAY)
+        add(lavabo, "Limpar vaso sanitário", giordano, weekly, TUESDAY)
+        add(lavabo, "Limpar espelho", amanda, weekly, TUESDAY)
+        add(lavabo, "Limpar pia", amanda, weekly, TUESDAY)
+        add(banheiroCasal, "Limpar chão", giordano, weekly, TUESDAY)
+        add(banheiroCasal, "Limpar vaso sanitário", giordano, weekly, TUESDAY)
+        add(banheiroCasal, "Trocar toalhas", amanda, weekly, TUESDAY, interval = 2)
+        add(banheiroCasal, "Limpar box", amanda, weekly, TUESDAY, interval = 2)
+        add(banheiroCasal, "Limpar vidros", amanda, weekly, TUESDAY, interval = 2)
+        add(banheiroCasal, "Limpar espelhos", amanda, weekly, TUESDAY)
+        add(banheiroCasal, "Limpar pia", amanda, weekly, TUESDAY)
+        add(banheiroVisitas, "Limpar chão", giordano, weekly, TUESDAY)
+        add(banheiroVisitas, "Limpar vaso sanitário", giordano, weekly, TUESDAY)
+        add(banheiroVisitas, "Limpar espelhos", amanda, weekly, TUESDAY)
+        add(banheiroVisitas, "Limpar pia", amanda, weekly, TUESDAY)
+        add(garagem, "Varrer", giordano, weekly, TUESDAY)
+        add(garagem, "Lavar", giordano, weekly, TUESDAY, interval = 2)
 
-        // --- DOMINGO · Giordano: Cozinha · Amanda: Quarto do Casal ---
-        add(cozinha, "Limpar as bancadas", giordano, weekly, SUNDAY)
-        add(cozinha, "Limpar o fogão", giordano, weekly, SUNDAY)
-        add(cozinha, "Limpar os eletros", giordano, weekly, SUNDAY)
-        add(cozinha, "Organizar a geladeira", giordano, weekly, SUNDAY)
-        add(cozinha, "Limpar a lata de lixo", giordano, weekly, SUNDAY, interval = 2)
-        add(cozinha, "Limpar o congelador", giordano, monthly, SUNDAY)
-        add(cozinha, "Limpar o forno", giordano, monthly, SUNDAY)
-        add(quartoCasal, "Tirar o pó", amanda, weekly, SUNDAY)
-        add(quartoCasal, "Trocar a roupa de cama", amanda, weekly, SUNDAY, interval = 2)
-        add(quartoCasal, "Limpar a janela", amanda, weekly, SUNDAY, interval = 2)
-        add(quartoCasal, "Organizar o closet", amanda, monthly, SUNDAY)
-        add(quartoCasal, "Limpar e organizar as gavetas", amanda, monthly, SUNDAY)
+        // --- QUARTA · Cozinha (exceto bancada, agora diária) + Quarto do Casal ---
+        add(cozinha, "Passar pano", giordano, weekly, WEDNESDAY)
+        add(cozinha, "Limpar e organizar gavetas", giordano, monthly, WEDNESDAY)
+        add(cozinha, "Limpar eletros", giordano, weekly, WEDNESDAY)
+        add(cozinha, "Limpar fogão", giordano, weekly, WEDNESDAY)
+        add(cozinha, "Limpar lata de lixo", giordano, weekly, WEDNESDAY, interval = 2)
+        add(cozinha, "Organizar geladeira", giordano, weekly, WEDNESDAY)
+        add(cozinha, "Trocar panos de prato", amanda, weekly, WEDNESDAY)
+        add(cozinha, "Limpar e organizar armários", giordano, monthly, WEDNESDAY)
+        add(cozinha, "Limpar congelador", giordano, monthly, WEDNESDAY)
+        add(cozinha, "Limpar forno", giordano, monthly, WEDNESDAY)
+        add(cozinha, "Limpar micro-ondas", giordano, monthly, WEDNESDAY)
+        add(quartoCasal, "Limpar janela", amanda, weekly, WEDNESDAY, interval = 2)
+        add(quartoCasal, "Organizar closet", amanda, monthly, WEDNESDAY)
+        add(quartoCasal, "Tirar pó", amanda, weekly, WEDNESDAY)
+        add(quartoCasal, "Trocar roupa de cama", amanda, weekly, WEDNESDAY)
+        add(quartoCasal, "Dobrar roupas", amanda, weekly, WEDNESDAY)
+        add(lavanderia, "Lavar roupa de cama", amanda, weekly, WEDNESDAY)
 
-        // --- SEGUNDA · Giordano: Sala de Estar · Amanda: Sala de Jantar ---
-        add(salaEstar, "Tirar o pó", giordano, weekly, MONDAY)
-        add(salaEstar, "Aspirar o sofá", giordano, weekly, MONDAY)
-        add(salaEstar, "Limpar o painel", giordano, weekly, MONDAY, interval = 2)
-        add(salaJantar, "Arrumar e organizar", amanda, weekly, MONDAY)
-        add(salaJantar, "Passar pano na mesa", amanda, weekly, MONDAY)
-        add(salaJantar, "Tirar o pó dos quadros", amanda, weekly, MONDAY, interval = 2)
+        // --- QUINTA · Escritório + Lavanderia ---
+        add(escritorio, "Limpar janela", giordano, weekly, THURSDAY, interval = 2)
+        add(escritorio, "Limpar objetos", giordano, weekly, THURSDAY)
+        add(escritorio, "Passar aspirador", giordano, weekly, THURSDAY)
+        add(escritorio, "Tirar pó", giordano, weekly, THURSDAY)
+        add(escritorio, "Arrumar", giordano, weekly, THURSDAY)
+        add(lavanderia, "Lavar toalha de banho", amanda, weekly, THURSDAY)
+        add(lavanderia, "Lavar panos de limpeza", amanda, weekly, THURSDAY)
+        add(lavanderia, "Lavar potes dos cachorros", giordano, weekly, THURSDAY)
+        add(lavanderia, "Lavar roupa escura", amanda, weekly, THURSDAY)
+        add(lavanderia, "Lavar roupas claras", amanda, weekly, THURSDAY)
+        add(lavanderia, "Lavar roupas do Augusto", amanda, weekly, THURSDAY)
+        add(lavanderia, "Organizar armários", amanda, monthly, THURSDAY)
 
-        // --- TERÇA · Giordano: Banheiro do Casal · Amanda: Lavabo ---
-        add(banheiroCasal, "Limpar a pia e os espelhos", giordano, weekly, TUESDAY)
-        add(banheiroCasal, "Limpar o vaso sanitário", giordano, weekly, TUESDAY)
-        add(banheiroCasal, "Limpar o chão", giordano, weekly, TUESDAY)
-        add(banheiroCasal, "Trocar as toalhas", giordano, weekly, TUESDAY, interval = 2)
-        add(banheiroCasal, "Limpar o box e os vidros", giordano, weekly, TUESDAY, interval = 2)
-        add(lavabo, "Limpar a pia e os espelhos", amanda, weekly, TUESDAY)
-        add(lavabo, "Limpar o vaso sanitário", amanda, weekly, TUESDAY)
-        add(lavabo, "Limpar o chão", amanda, weekly, TUESDAY)
-        add(lavabo, "Trocar a escova de dentes", amanda, monthly, TUESDAY)
+        // --- SEXTA · Sala de Estar + Sala de Jantar ---
+        add(salaEstar, "Arrumar", giordano, weekly, FRIDAY)
+        add(salaEstar, "Limpar janela", giordano, weekly, FRIDAY, interval = 2)
+        add(salaEstar, "Limpar painel", giordano, weekly, FRIDAY, interval = 2)
+        add(salaEstar, "Tirar pó", giordano, weekly, FRIDAY)
+        add(salaJantar, "Arrumar", amanda, weekly, FRIDAY)
+        add(salaJantar, "Limpar e organizar aparador", amanda, monthly, FRIDAY)
+        add(salaJantar, "Passar pano na mesa", amanda, weekly, FRIDAY)
+        add(salaJantar, "Tirar pó dos quadros", amanda, weekly, FRIDAY, interval = 2)
 
-        // --- QUARTA · Giordano: Escritório · Amanda: Quarto do Guto ---
-        add(escritorio, "Tirar o pó e limpar os objetos", giordano, weekly, WEDNESDAY)
-        add(escritorio, "Passar o aspirador", giordano, weekly, WEDNESDAY)
-        add(escritorio, "Limpar a janela", giordano, weekly, WEDNESDAY, interval = 2)
-        add(quartoGuto, "Arrumar e organizar", amanda, weekly, WEDNESDAY)
-        add(quartoGuto, "Tirar o pó", amanda, weekly, WEDNESDAY)
-        add(quartoGuto, "Trocar a roupa de cama", amanda, weekly, WEDNESDAY, interval = 2)
-        add(quartoGuto, "Organizar e limpar os armários", amanda, monthly, WEDNESDAY)
+        // --- SÁBADO · Geral (casa toda) + Quarto do Augusto ---
+        add(geral, "Tirar lixo reciclável", giordano, weekly, SATURDAY)
+        add(quartoAugusto, "Arrumar", amanda, weekly, SATURDAY)
+        add(quartoAugusto, "Organizar e limpar armários", amanda, monthly, SATURDAY)
+        add(quartoAugusto, "Tirar pó", amanda, weekly, SATURDAY)
+        add(quartoAugusto, "Trocar roupa de cama", amanda, weekly, SATURDAY, interval = 2)
 
-        // --- QUINTA · Giordano: Lavanderia · Amanda: Banheiro de Visitas ---
-        add(lavanderia, "Lavar a roupa", giordano, weekly, THURSDAY)
-        add(lavanderia, "Lavar o pote dos cães", giordano, weekly, THURSDAY)
-        add(lavanderia, "Lavar a roupa de cama", giordano, weekly, THURSDAY, interval = 2)
-        add(banheiroVisitas, "Limpar a pia e os espelhos", amanda, weekly, THURSDAY)
-        add(banheiroVisitas, "Limpar o vaso sanitário", amanda, weekly, THURSDAY)
-        add(banheiroVisitas, "Limpar o chão", amanda, weekly, THURSDAY)
-        add(banheiroVisitas, "Lavar/trocar as toalhas", amanda, weekly, THURSDAY, interval = 2)
-        add(banheiroVisitas, "Organizar os armários", amanda, monthly, THURSDAY)
+        // --- DOMINGO · Quarto de Visitas + Jardim + Fundos ---
+        add(quartoVisitas, "Arrumar", amanda, weekly, SUNDAY)
+        add(quartoVisitas, "Limpar janela", amanda, weekly, SUNDAY, interval = 2)
+        add(quartoVisitas, "Tirar pó", amanda, weekly, SUNDAY)
+        add(jardim, "Cortar grama", giordano, monthly, SUNDAY)
+        add(fundos, "Lavar", giordano, weekly, SUNDAY)
 
-        // --- SEXTA · Giordano: Casa toda · Amanda: Quarto de Visitas + Fundos ---
-        add(casaToda, "Aspirar o primeiro andar", giordano, weekly, FRIDAY)
-        add(casaToda, "Aspirar o segundo andar", giordano, weekly, FRIDAY)
-        add(casaToda, "Tirar o lixo reciclável", giordano, weekly, FRIDAY)
-        add(casaToda, "Fazer o mercado", giordano, weekly, FRIDAY)
-        add(casaToda, "Cozinhar as refeições (Mario)", giordano, weekly, FRIDAY, interval = 2)
-        add(quartoVisitas, "Arrumar e organizar o quarto de visitas", amanda, weekly, FRIDAY)
-        add(quartoVisitas, "Tirar o pó", amanda, weekly, FRIDAY)
-        add(quartoVisitas, "Limpar a janela", amanda, weekly, FRIDAY, interval = 2)
-        add(fundos, "Molhar as plantas", amanda, weekly, FRIDAY)
-        add(cozinha, "Trocar os panos de prato", amanda, weekly, FRIDAY)
+        // --- QUASE-DIÁRIAS (terça a domingo, nunca segunda) ---
+        add(fundos, "Tirar cocô", giordano, weekly, daysOfWeek = semDaSegunda, priority = Priority.HIGH)
+        add(geral, "Molhar plantas", amanda, weekly, daysOfWeek = semDaSegunda)
 
-        // Sábado: livre para os dois.
+        // --- DIÁRIAS PURAS (todo dia, inclusive segunda) ---
+        add(cozinha, "Lavar louça", giordano, daily)
+        add(cozinha, "Limpar bancadas", giordano, daily, interval = 2)
+        add(geral, "Tirar lixo orgânico", giordano, daily)
+        add(quartoCasal, "Arrumar cama", amanda, daily)
+        add(geral, "Aspirar primeiro andar", giordano, daily)
+        add(geral, "Aspirar sofá", giordano, daily, interval = 2)
+        add(geral, "Aspirar segundo andar", giordano, daily, interval = 2)
     }
 
     /** Hoje, se for o mesmo dia da semana; senão, a próxima ocorrência desse dia. */

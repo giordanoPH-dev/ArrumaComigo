@@ -38,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.thesmallmarket.arrumacomigo.ui.theme.NeumorphicEdgeInset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
@@ -157,7 +158,7 @@ private fun RoomList(
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(vertical = 8.dp),
+                contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 items(rooms, key = { it.id }) { room ->
@@ -267,7 +268,7 @@ private fun RoomDetailPane(
                 }
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(vertical = 4.dp),
+                    contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     items(tasks, key = { it.task.id }) { item ->

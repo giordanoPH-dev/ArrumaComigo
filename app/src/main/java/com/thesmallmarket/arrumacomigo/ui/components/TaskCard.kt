@@ -3,6 +3,7 @@
 package com.thesmallmarket.arrumacomigo.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,10 +13,13 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Notifications
@@ -33,11 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.thesmallmarket.arrumacomigo.data.RecurrenceCalculator
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
+import java.time.LocalDateTime
 import com.thesmallmarket.arrumacomigo.ui.TaskCardUi
 import com.thesmallmarket.arrumacomigo.ui.dueLabel
 import com.thesmallmarket.arrumacomigo.ui.isOverdue
@@ -90,6 +97,14 @@ fun TaskCard(
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
+                // Concluída: mostra o dia em que era devida (o nextDueDate já avançou), sem alarme de atraso.
+                // Pendente: mostra a ocorrência da aba visível (item.dueDate), não o nextDueDate cru.
+                val labelDate = if (done) {
+                    item.completion?.dueDate ?: task.nextDueDate
+                } else {
+                    item.dueDate ?: task.nextDueDate
+                }
+                val overdue = !done && isOverdue(labelDate)
                 // Metadados em FlowRow: quebram para a linha de baixo em telas estreitas.
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -106,9 +121,8 @@ fun TaskCard(
                             )
                         }
                     }
-                    val overdue = isOverdue(task.nextDueDate)
                     Text(
-                        dueLabel(task.nextDueDate),
+                        dueLabel(labelDate),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     )
@@ -126,6 +140,33 @@ fun TaskCard(
                             contentDescription = "Lembrete",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(14.dp),
+                        )
+                    }
+                }
+                // Barra de progresso do período: enche desde a última ocorrência até o vencimento;
+                // cheia e vermelha quando atrasada. Oculta em cards concluídos.
+                if (!done) {
+                    val fraction = RecurrenceCalculator.progressFraction(
+                        nextDueDate = labelDate,
+                        recurrence = task.recurrence,
+                        interval = task.recurrenceInterval,
+                        daysOfWeek = task.daysOfWeek,
+                        now = LocalDateTime.now(),
+                    )
+                    val barColor = if (overdue) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth(fraction)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(barColor),
                         )
                     }
                 }

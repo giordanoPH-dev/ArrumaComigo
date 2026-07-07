@@ -92,6 +92,7 @@ fun TaskEditScreen(
     var title by rememberSaveable { mutableStateOf("") }
     var titleError by rememberSaveable { mutableStateOf(false) }
     var roomId by rememberSaveable { mutableStateOf(presetRoomId) }
+    var roomError by rememberSaveable { mutableStateOf(false) }
     var personId by rememberSaveable(stateSaver = nullableLongSaver) { mutableStateOf<Long?>(null) }
     var priority by rememberSaveable { mutableStateOf(Priority.MEDIUM) }
     var minutes by rememberSaveable { mutableStateOf("") }
@@ -186,10 +187,17 @@ fun TaskEditScreen(
                 rooms.forEach { room ->
                     FilterChip(
                         selected = room.id == roomId,
-                        onClick = { roomId = room.id },
+                        onClick = { roomId = room.id; roomError = false },
                         label = { Text("${room.type.emoji} ${room.name}") },
                     )
                 }
+            }
+            if (roomError) {
+                Text(
+                    if (rooms.isEmpty()) "Cadastre um cômodo primeiro (aba Cômodos)" else "Escolha um cômodo",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
 
             FieldLabel("Responsável")
@@ -293,7 +301,9 @@ fun TaskEditScreen(
                 onClick = {
                     if (title.isBlank()) {
                         titleError = true
-                    } else if (roomId > 0L) {
+                    } else if (roomId <= 0L) {
+                        roomError = true
+                    } else {
                         val effDays = effectiveDaysOfWeek(recurrence, daysOfWeek, dueDate)
                         // Semanal criada num dia não marcado nasce na próxima ocorrência, não "atrasada".
                         val firstDue = if (recurrence == Recurrence.WEEKLY) {

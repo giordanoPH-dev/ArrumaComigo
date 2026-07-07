@@ -41,6 +41,57 @@ object RecurrenceCalculator {
         return from.plusWeeks(interval.toLong())
     }
 
+    /** Retorna a ocorrência anterior a [from], ou null para tarefas não recorrentes. */
+    fun previous(
+        from: LocalDate,
+        recurrence: Recurrence,
+        interval: Int = 1,
+        daysOfWeek: Int = 0,
+    ): LocalDate? {
+        val step = interval.coerceAtLeast(1)
+        return when (recurrence) {
+            Recurrence.NONE -> null
+            Recurrence.DAILY -> from.minusDays(step.toLong())
+            Recurrence.MONTHLY -> from.minusMonths(step.toLong())
+            Recurrence.WEEKLY -> previousWeekly(from, step, daysOfWeek)
+        }
+    }
+
+    private fun previousWeekly(from: LocalDate, interval: Int, daysOfWeek: Int): LocalDate {
+        if (daysOfWeek == 0) return from.minusWeeks(interval.toLong())
+        // Espelho de nextWeekly: procura o dia marcado anterior; se cruzou seg→dom para trás,
+        // saiu da semana ativa e o intervalo entra na conta.
+        for (offset in 1..7) {
+            val candidate = from.minusDays(offset.toLong())
+            if (isDaySelected(candidate.dayOfWeek, daysOfWeek)) {
+                val crossedWeek = candidate.dayOfWeek.value >= from.dayOfWeek.value
+                return if (crossedWeek) candidate.minusWeeks(interval - 1L) else candidate
+            }
+        }
+        return from.minusWeeks(interval.toLong())
+    }
+
+    /**
+     * Fração [0..1] do período atual já decorrida: 0 logo após a ocorrência anterior,
+     * ~cheia no dia do vencimento e 1 depois que ele passa. Alimenta a barra de progresso do cartão.
+     */
+    fun progressFraction(
+        nextDueDate: LocalDate,
+        recurrence: Recurrence,
+        interval: Int,
+        daysOfWeek: Int,
+        now: java.time.LocalDateTime,
+    ): Float {
+        // ponytail: tarefa avulsa não tem período; janela fixa de 7 dias antes do vencimento.
+        val start = previous(nextDueDate, recurrence, interval, daysOfWeek) ?: nextDueDate.minusDays(7)
+        val startAt = start.atStartOfDay()
+        val endAt = nextDueDate.plusDays(1).atStartOfDay()
+        val total = java.time.Duration.between(startAt, endAt).toMinutes().toFloat()
+        if (total <= 0f) return 1f
+        val elapsed = java.time.Duration.between(startAt, now).toMinutes().toFloat()
+        return (elapsed / total).coerceIn(0f, 1f)
+    }
+
     /**
      * Primeira ocorrência de uma tarefa semanal a partir de [from]: o próprio [from] se o dia
      * dele está marcado (ou sem dias marcados), senão o próximo dia marcado.

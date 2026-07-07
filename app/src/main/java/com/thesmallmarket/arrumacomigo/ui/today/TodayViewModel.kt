@@ -103,6 +103,9 @@ class TodayViewModel(
                 person = task.assignedPersonId?.let { personById[it] },
                 done = doneByTask.containsKey(task.id),
                 completion = doneByTask[task.id],
+                // Em abas futuras a ocorrência exibida é a do próprio dia da aba;
+                // em hoje mantém nextDueDate (preserva o rótulo "Atrasada").
+                dueDate = if (date == today) task.nextDueDate else date,
             )
 
             val pending = tasks.filter { task ->
@@ -157,7 +160,9 @@ class TodayViewModel(
                     val reverted = repository.uncompleteTask(item.task, item.completion)
                     scheduler.schedule(reverted)
                 } else {
-                    val updated = repository.completeTask(item.task)
+                    // Conclui no dia da aba selecionada (não em "hoje"): quem marca na sexta, fez na sexta.
+                    val completedAt = uiState.value.selectedDate.atTime(java.time.LocalTime.now())
+                    val updated = repository.completeTask(item.task, completedAt)
                     if (updated != null) scheduler.schedule(updated) else scheduler.cancel(item.task.id)
                     _events.tryEmit(TodayEvent.TaskCompleted(item.task.id, item.task.title))
                 }

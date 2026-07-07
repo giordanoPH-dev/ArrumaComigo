@@ -47,6 +47,7 @@ import com.thesmallmarket.arrumacomigo.ui.components.CelebrationBus
 import com.thesmallmarket.arrumacomigo.ui.components.PersonPickerDialog
 import com.thesmallmarket.arrumacomigo.ui.components.SectionHeader
 import com.thesmallmarket.arrumacomigo.ui.components.TaskCard
+import com.thesmallmarket.arrumacomigo.ui.theme.NeumorphicEdgeInset
 import kotlinx.coroutines.withTimeoutOrNull
 import com.thesmallmarket.arrumacomigo.ui.weekdayShortLabels
 import java.time.LocalDate
@@ -133,7 +134,7 @@ fun TodayScreen(
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 340.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp, horizontal = 2.dp),
+                    contentPadding = PaddingValues(vertical = NeumorphicEdgeInset, horizontal = 2.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {

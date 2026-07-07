@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.thesmallmarket.arrumacomigo.ui.AppViewModelProvider
 import com.thesmallmarket.arrumacomigo.ui.PersonBalance
 import com.thesmallmarket.arrumacomigo.ui.components.NeoCard
+import com.thesmallmarket.arrumacomigo.ui.theme.NeumorphicEdgeInset
 import com.thesmallmarket.arrumacomigo.ui.components.PersonAvatar
 import com.thesmallmarket.arrumacomigo.ui.components.SectionHeader
 import java.time.format.DateTimeFormatter
@@ -59,7 +60,7 @@ fun HistoryScreen(
         }
 
         LazyColumn(
-            contentPadding = PaddingValues(vertical = 8.dp),
+            contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (state.balances.isNotEmpty()) {

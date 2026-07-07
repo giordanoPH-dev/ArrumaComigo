@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.ui.AppViewModelProvider
+import com.thesmallmarket.arrumacomigo.ui.theme.NeumorphicEdgeInset
 import com.thesmallmarket.arrumacomigo.ui.components.NeoButton
 import com.thesmallmarket.arrumacomigo.ui.components.NeoCard
 import com.thesmallmarket.arrumacomigo.ui.components.NeoIconButton
@@ -84,7 +85,7 @@ fun PeopleScreen(
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 260.dp),
-                contentPadding = PaddingValues(vertical = 8.dp),
+                contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {

@@ -14,6 +14,8 @@ data class TaskCardUi(
     val done: Boolean = false,
     /** A conclusão de hoje, quando [done], para permitir desfazer. */
     val completion: TaskCompletion? = null,
+    /** Data da ocorrência exibida (aba do calendário semanal); null = usar task.nextDueDate. */
+    val dueDate: java.time.LocalDate? = null,
 )
 
 /** Detalhe de um cômodo com suas tarefas. */

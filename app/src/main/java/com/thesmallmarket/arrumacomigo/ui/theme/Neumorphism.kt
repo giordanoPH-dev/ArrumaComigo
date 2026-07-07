@@ -18,6 +18,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 
+/**
+ * Espaço mínimo que uma lista rolável precisa deixar no topo/rodapé (contentPadding vertical)
+ * para a sombra neumórfica do primeiro/último card não ser cortada pelo clip de scroll.
+ * Cobre o pior caso (elevation 8dp: offset 8dp + blur 13.6dp ≈ 21.6dp) com folga.
+ */
+val NeumorphicEdgeInset = 24.dp
+
 /** Cores usadas pelas sombras neumórficas, fornecidas pelo tema. */
 data class NeumorphicColors(
     val surface: Color,

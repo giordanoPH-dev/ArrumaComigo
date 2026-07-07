@@ -1,5 +1,6 @@
 package com.thesmallmarket.arrumacomigo
 
+import com.thesmallmarket.arrumacomigo.data.RecurrenceCalculator
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
@@ -13,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -28,19 +30,24 @@ class HouseSeederTest {
         assertTrue(repo.people.any { it.name == "Amanda" })
 
         // Cômodos da "Rotina da Casa"
-        assertEquals(13, repo.rooms.size)
+        assertEquals(15, repo.rooms.size)
 
-        // Rotina robusta com diárias, semanais, quinzenais e mensais
-        assertTrue("esperava muitas tarefas, veio ${repo.tasks.size}", repo.tasks.size >= 30)
-        assertTrue(repo.tasks.any { it.recurrence == Recurrence.DAILY })
+        // Rotina robusta com semanais, quinzenais, mensais e quase-diárias
+        assertTrue("esperava muitas tarefas, veio ${repo.tasks.size}", repo.tasks.size >= 60)
         assertTrue(repo.tasks.any { it.recurrence == Recurrence.WEEKLY && it.recurrenceInterval == 2 }) // quinzenal
         assertTrue(repo.tasks.any { it.recurrence == Recurrence.MONTHLY })
+        // Quase-diária: semanal com 6 dias marcados, nunca segunda.
+        assertTrue(repo.tasks.any {
+            it.recurrence == Recurrence.WEEKLY &&
+                it.daysOfWeek != 0 &&
+                !RecurrenceCalculator.isDaySelected(DayOfWeek.MONDAY, it.daysOfWeek)
+        })
 
         // Divisão do casal conforme o documento
         val amanda = repo.people.first { it.name == "Amanda" }.id
         val giordano = repo.people.first { it.name == "Giordano" }.id
-        assertTrue(repo.tasks.any { it.title.contains("comida aos cães", true) && it.assignedPersonId == giordano })
-        assertTrue(repo.tasks.any { it.title.contains("Arrumar a cama", true) && it.assignedPersonId == amanda })
+        assertTrue(repo.tasks.any { it.title.contains("tirar cocô", true) && it.assignedPersonId == giordano })
+        assertTrue(repo.tasks.any { it.title.contains("arrumar cama", true) && it.assignedPersonId == amanda })
 
         // Toda tarefa tem um responsável e um cômodo válido
         assertTrue(repo.tasks.all { it.assignedPersonId != null && it.roomId > 0 })

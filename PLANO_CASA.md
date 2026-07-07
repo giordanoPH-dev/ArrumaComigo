@@ -5,63 +5,67 @@ A ideia é um dia a dia **leve e tranquilo**: pouca coisa por dia, divisão just
 
 ## Filosofia
 
-1. **Cada dia é uma "zona" da casa** — os dias são organizados por **cômodos** (ex.: terça é dia de banheiros, sábado é dia de área externa). Assim você concentra o foco e não fica pulando de canto em canto. As tarefas que não pertencem a um cômodo específico ficam como **gerais/diárias**.
-2. **Âncoras diárias** — 2 hábitos rápidos por pessoa, todo dia, que seguram a casa em ordem.
-3. **Divisão ~50/50** — com os combinados de vocês: **Amanda dobra/guarda roupa**, **Giordano cuida da cozinha**.
-4. **O pesado é raro** — vidros, garagem, área externa e profundas viram **quinzenais (✚)** ou **mensais (★)**.
-5. **Reset de 10 minutos** — antes de dormir, 10 min cada um devolvendo as coisas ao lugar. É o que mantém tudo leve.
+1. **Cada dia mistura duas zonas** — uma mais pesada para o Giordano e outra para a Amanda (ex.: terça é banheiros+garagem, quarta é cozinha+quarto do casal), para nenhum dia ficar 100% de uma pessoa só.
+2. **Segunda-feira é sempre livre da escala** — nenhuma tarefa semanal/quinzenal/mensal cai na segunda. As tarefas realmente diárias (lavar louça, limpar bancada, arrumar cama do casal, tirar lixo orgânico, aspirar 1º andar/sofá/2º andar) rodam todo santo dia, inclusive segunda.
+3. **Quase-diárias** — 2 tarefas rodam de terça a domingo (nunca segunda): molhar plantas e tirar cocô dos cães.
+4. **Divisão por natureza da tarefa** — **Amanda** cuida de tudo ligado a roupa (lavanderia inteira, roupa de cama, panos de prato) e do "acabamento" dos banheiros (espelho, pia, toalha, box, vidro); **Giordano** cuida do chão e vaso sanitário de todo banheiro, da cozinha, do lixo, do quintal, da garagem e do cocô dos cães.
+5. **O pesado é raro** — armários, closet, eletrodomésticos por dentro e forno viram **mensais**; toalhas, vidros, janelas e roupa de cama viram **quinzenais (✚)**.
 
 ## Cadências (legenda)
-- **Diária** — todo dia.
+- **Diária** — todo dia, sem exceção (nem segunda).
 - **Semanal** — uma vez por semana, no dia marcado.
 - **✚ Quinzenal** — a cada 15 dias, no mesmo dia da semana.
 - **★ Mensal** — uma vez por mês.
+- **◆ Quase-diária** — terça a domingo, todo dia, exceto segunda.
 
-## Âncoras diárias (todo dia)
+## Diárias e quase-diárias
 | Giordano | Amanda |
 |----------|--------|
-| Lavar a louça | Limpar a área dos cachorros (cocô e xixi) |
-| Limpar bancada e fogão | Arrumar a cama |
+| Lavar louça (todo dia) | Arrumar cama do casal (todo dia) |
+| Tirar lixo orgânico (todo dia) | Molhar plantas ◆ |
+| Aspirar primeiro andar (todo dia) | |
+| Limpar bancada da cozinha (a cada 2 dias) | |
+| Aspirar sofá (a cada 2 dias) | |
+| Aspirar segundo andar (a cada 2 dias) | |
+| Tirar cocô dos cães (Fundos) ◆ | |
 
 ## A escala da semana (por zona/cômodo, com ações concretas)
 
-As tarefas são **item a item** (checklist): cada ação é uma tarefa marcável.
+As tarefas são **item a item** (checklist): cada ação é uma tarefa marcável. Em todo banheiro,
+**chão e vaso sanitário são do Giordano**; o resto (espelho, pia, toalha, box, vidro) é da Amanda.
 
-**Diárias (todo dia):** Giordano — Lavar a louça · Passar pano na bancada e no fogão | Amanda — Recolher cocô e xixi dos cães · Arrumar a cama
-
-| Dia | Zona | Giordano | Amanda |
+| Dia | Zonas | Giordano | Amanda |
 |-----|------|----------|--------|
-| **Segunda** | Sala + Lavanderia | Aspirar o chão · Aspirar o sofá · Lavar e estender a roupa | Tirar o pó dos móveis e da TV · Passar pano no chão · Dobrar e guardar a roupa |
-| **Terça** | Banheiros | Banheiro de visitas (vaso+pia; espelho+chão) · Lavabo (vaso+pia; espelho+chão) | Banheiro do casal: esfregar o vaso · pia e bancada · espelho e box · pano no chão |
-| **Quarta** | Quartos | Aspirar o quarto do casal · Tirar o pó · Organizar o closet ✚ | Trocar os lençóis · Quarto do Augusto: aspirar+brinquedos · pó+roupa de cama |
-| **Quinta** | Sala de Jantar + Lavanderia | Aspirar/varrer · Tirar o pó da mesa · Lavar e estender a roupa | Passar pano no chão · Dobrar e guardar a roupa · Lavar tapetes e roupa de cama ✚ |
-| **Sexta** | Cozinha a fundo + Escritório | Geladeira por dentro · Armários e azulejos · Pano no chão · Forno por dentro ★ | Mesa e pó do escritório · Aspirar/varrer o escritório · Quarto da bagunça ✚ |
-| **Sábado** | Garagem + Jardim + Área externa | Varrer a garagem ✚ · Organizar prateleiras ✚ · Varrer área externa ✚ · Lavar o chão ★ | Regar as plantas · Varrer o jardim e a calçada · Capinar e podar ✚ |
-| **Domingo** | Casa toda + Quarto de visitas | Vidros e janelas ✚ · Pó das luminárias/ventiladores ★ · Corredores e escadas · Aspirar/arejar visitas | Pano nos corredores e escadas · Rodapés e portas ✚ · Roupa de cama e pó (visitas) ★ |
+| **Segunda** | — | Livre (só as diárias da cozinha) | Livre |
+| **Terça** | Banheiros + Garagem | Lavabo: chão · vaso · Banheiro do Casal: chão · vaso · Banheiro de Visitas: chão · vaso · Garagem: varrer · lavar ✚ | Lavabo: espelho · pia · Banheiro do Casal: toalhas ✚ · box ✚ · vidros ✚ · espelhos · pia · Banheiro de Visitas: espelhos · pia |
+| **Quarta** | Cozinha + Quarto do Casal | Cozinha: pano · gavetas ★ · eletros · fogão · lata de lixo ✚ · geladeira · armários ★ · congelador ★ · forno ★ · micro-ondas ★ | Cozinha: trocar panos de prato · Quarto do Casal: janela ✚ · closet ★ · pó · roupa de cama · dobrar roupas · Lavanderia: lavar roupa de cama (mesmo dia em que tira da cama) |
+| **Quinta** | Escritório + Lavanderia | Escritório: janela ✚ · objetos · aspirador · pó · arrumar · Lavanderia: potes dos cachorros | Lavanderia: toalha de banho · panos de limpeza · roupa escura · roupas claras · roupas do Augusto · armários ★ |
+| **Sexta** | Sala de Estar + Sala de Jantar | Sala de Estar: arrumar · janela ✚ · painel ✚ · pó | Sala de Jantar: arrumar · aparador ★ · pano na mesa · pó dos quadros ✚ |
+| **Sábado** | Geral + Quarto do Augusto | Geral: tirar lixo reciclável | Quarto do Augusto: arrumar · armários ★ · pó · roupa de cama ✚ |
+| **Domingo** | Quarto de Visitas + Jardim + Fundos | Jardim: cortar grama ★ · Fundos: lavar | Quarto de Visitas: arrumar · janela ✚ · pó |
 
-Lavar ↔ dobrar acontece **2× por semana** (seg/qui): Giordano lava e estende, Amanda dobra e guarda.
-Cada dia foca em 1–3 cômodos, com a carga dividida ~50/50 entre vocês e o pesado (✚/★) espalhado para nenhum dia ficar puxado.
+Garagem, Jardim e Fundos foram encaixados nos dias dos banheiros/visitas só para equilibrar a carga —
+não há vínculo temático, é o mesmo princípio de misturar zonas que já vinha do plano original.
 
-## Cômodos cobertos (3 andares)
-- **1º andar:** Fundos (cães), Cozinha, Lavanderia, Sala, Sala de Jantar, Lavabo, Garagem, Jardim da frente.
-- **2º andar:** Quarto do casal, Closet, Banheiro do casal, Banheiro de visitas, Quarto de visitas, Quarto do Augusto.
-- **3º andar:** Escritório, Quarto da bagunça, Área externa.
-- **+ "Casa toda":** cômodo virtual para tarefas da casa inteira (vidros, rodapés, corredores/escadas, luminárias).
+## Cômodos cobertos (15)
+- **Social/serviço:** Cozinha, Sala de Estar, Sala de Jantar, Lavabo, Lavanderia, Escritório.
+- **Quartos e banheiros:** Quarto do Casal, Banheiro do Casal, Quarto de Visitas, Banheiro de Visitas, Quarto do Augusto.
+- **Área externa:** Garagem, Fundos, Jardim.
+- **+ "Geral":** cômodo virtual para tarefas da casa inteira (aspirar andares/sofá, lixo reciclável).
 
 ## Como usar o app no dia a dia (UX)
 - **Hoje:** sua primeira tela da manhã. Use o filtro **Todas / Giordano / Amanda** para ver só o que é seu.
   Marque concluído **na hora** que terminar — tarefa recorrente já reaparece na próxima data.
-- **Semana:** veja a escala inteira (Seg→Dom + Diárias), dividida por pessoa, para se antecipar e combinar trocas.
+- **Semana:** veja a escala inteira (Ter→Dom + diárias/quase-diárias), dividida por pessoa, para se antecipar e combinar trocas.
 - **Cômodos:** adicione/edite tarefas por ambiente; tipos de cômodo já trazem sugestões.
 - **Pessoas:** ajuste nomes, cores e emojis.
 - **Balanço:** veja quem fez quanto nos últimos 30 dias — bom para manter a divisão justa.
-- **Lembretes:** abra uma tarefa e ligue o lembrete (sugestão: nas âncoras diárias, num horário fixo). Vêm desligados por padrão.
+- **Lembretes:** abra uma tarefa e ligue o lembrete (sugestão: nas diárias/quase-diárias, num horário fixo). Vêm desligados por padrão.
 
 ## Princípios de organização (para a casa fluir)
 - **Cada coisa tem um lugar** — o que não tem lugar definido é o que vira bagunça. Definam juntos.
 - **Superfícies livres** — bancadas, mesas e o criado-mudo limpos passam sensação de casa arrumada com pouco esforço.
-- **Lave enquanto cozinha** — a cozinha (Giordano) fica leve se a louça não acumula.
-- **Roupa em fluxo** — lavar e dobrar no mesmo dia evita o "monte da cadeira".
+- **Roupa em fluxo** — lavar e organizar no mesmo dia evita o "monte da cadeira".
 - **Quinzenal/mensal no calendário** — o pesado já está agendado; não precisa pensar, é só fazer no dia.
 - **Revisão mensal** — 15 min juntos olhando o Balanço e ajustando a escala se algo ficou desigual.
 

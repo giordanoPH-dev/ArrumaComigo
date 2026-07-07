@@ -116,6 +116,46 @@ class RecurrenceCalculatorTest {
     }
 
     @Test
+    fun `previous mirrors next for simple recurrences`() {
+        assertNull(RecurrenceCalculator.previous(monday, Recurrence.NONE))
+        assertEquals(monday.minusDays(1), RecurrenceCalculator.previous(monday, Recurrence.DAILY))
+        assertEquals(monday.minusDays(3), RecurrenceCalculator.previous(monday, Recurrence.DAILY, interval = 3))
+        assertEquals(monday.minusMonths(2), RecurrenceCalculator.previous(monday, Recurrence.MONTHLY, interval = 2))
+        assertEquals(monday.minusWeeks(1), RecurrenceCalculator.previous(monday, Recurrence.WEEKLY))
+    }
+
+    @Test
+    fun `previous weekly finds the prior selected day`() {
+        // Seg+sex: antes da sexta vem a segunda da mesma semana; antes da segunda, a sexta anterior.
+        var mask = RecurrenceCalculator.toggleDay(0, DayOfWeek.MONDAY)
+        mask = RecurrenceCalculator.toggleDay(mask, DayOfWeek.FRIDAY)
+        val friday = monday.plusDays(4)
+        assertEquals(monday, RecurrenceCalculator.previous(friday, Recurrence.WEEKLY, daysOfWeek = mask))
+        assertEquals(monday.minusDays(3), RecurrenceCalculator.previous(monday, Recurrence.WEEKLY, daysOfWeek = mask))
+        // Semanal só na segunda: volta 7 dias.
+        val mondayMask = RecurrenceCalculator.toggleDay(0, DayOfWeek.MONDAY)
+        assertEquals(monday.minusWeeks(1), RecurrenceCalculator.previous(monday, Recurrence.WEEKLY, daysOfWeek = mondayMask))
+        // Quinzenal só na segunda: volta 14 dias.
+        assertEquals(monday.minusWeeks(2), RecurrenceCalculator.previous(monday, Recurrence.WEEKLY, interval = 2, daysOfWeek = mondayMask))
+    }
+
+    @Test
+    fun `progressFraction fills over the period and saturates when overdue`() {
+        val mondayMask = RecurrenceCalculator.toggleDay(0, DayOfWeek.MONDAY)
+        fun fractionAt(now: java.time.LocalDateTime) =
+            RecurrenceCalculator.progressFraction(monday, Recurrence.WEEKLY, 1, mondayMask, now)
+        // Logo após a ocorrência anterior (segunda passada): vazia.
+        assertEquals(0f, fractionAt(monday.minusWeeks(1).atStartOfDay()), 0.01f)
+        // No meio do período (janela de 8 dias: seg passada 00:00 → ter 00:00): 4 dias = metade.
+        assertEquals(0.5f, fractionAt(monday.minusDays(3).atStartOfDay()), 0.01f)
+        // No dia do vencimento: quase cheia, mas não cheia.
+        val onDueDay = fractionAt(monday.atTime(12, 0))
+        assertTrue(onDueDay in 0.85f..0.99f)
+        // Depois do vencimento: cheia (atrasada).
+        assertEquals(1f, fractionAt(monday.plusDays(2).atTime(9, 0)), 0.0f)
+    }
+
+    @Test
     fun `toggle and isDaySelected are consistent`() {
         var mask = 0
         mask = RecurrenceCalculator.toggleDay(mask, DayOfWeek.FRIDAY)
