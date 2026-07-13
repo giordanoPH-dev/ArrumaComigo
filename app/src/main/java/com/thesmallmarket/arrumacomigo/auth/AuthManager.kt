@@ -33,6 +33,10 @@ class AuthManager(context: Context, private val db: AppDatabase) {
 
     val householdId: String? get() = prefs.getString("household_id", null)
     val inviteCode: String? get() = prefs.getString("invite_code", null)
+    val userId: String? get() = prefs.getString("user_id", null)
+    val userName: String? get() = prefs.getString("user_name", null)
+
+    data class Member(val userId: String, val name: String)
 
     fun bearerOrNull(): String? = prefs.getString("access_token", null)
 
@@ -53,10 +57,13 @@ class AuthManager(context: Context, private val db: AppDatabase) {
     }
 
     /** Cria a conta e já entra (exige "Confirm email" desabilitado no dashboard do Supabase). */
-    suspend fun signUp(email: String, password: String) = withContext(Dispatchers.IO) {
+    suspend fun signUp(name: String, email: String, password: String) = withContext(Dispatchers.IO) {
         val response = authHttp(
             "signup",
-            JSONObject().put("email", email).put("password", password),
+            JSONObject()
+                .put("email", email)
+                .put("password", password)
+                .put("data", JSONObject().put("name", name)),
         )
         if (!response.has("access_token")) {
             throw IOException("Conta criada — confirme o e-mail antes de entrar.")
@@ -77,12 +84,71 @@ class AuthManager(context: Context, private val db: AppDatabase) {
         saveSession(response)
     }
 
-    suspend fun createHousehold(name: String) {
-        callRpc("create_household", JSONObject().put("p_name", name), "Não foi possível criar a família.")
+    /** Cria a família e retorna o código de convite. NÃO emite Ready — chame [continueToApp]. */
+    suspend fun createHousehold(name: String): String {
+        val json = JSONObject(
+            callRpc("create_household", JSONObject().put("p_name", name), "Não foi possível criar a família.")
+        )
+        val code = json.getString("invite_code")
+        prefs.edit()
+            .putString("household_id", json.getString("id"))
+            .putString("invite_code", code)
+            .apply()
+        return code
+    }
+
+    /** Depois do card "Família criada!": leva o usuário para o app. */
+    fun continueToApp() {
+        _state.value = AuthState.Ready(householdId!!)
     }
 
     suspend fun joinHousehold(code: String) {
-        callRpc("join_household", JSONObject().put("p_code", code), "Código de convite inválido.")
+        val json = JSONObject(
+            callRpc("join_household", JSONObject().put("p_code", code), "Código de convite inválido.")
+        )
+        setHousehold(json.getString("id"), json.optStringOrNull("invite_code"))
+    }
+
+    /** Membros da família (o servidor filtra pela família do JWT via RLS). */
+    suspend fun members(): List<Member> = withContext(Dispatchers.IO) {
+        refreshIfNeeded()
+        val rows = JSONArray(restGet("household_members?select=user_id,name"))
+        (0 until rows.length()).map {
+            val row = rows.getJSONObject(it)
+            Member(row.getString("user_id"), row.optStringOrNull("name") ?: "Sem nome")
+        }
+    }
+
+    /** Nome + código de convite da família (útil para quem entrou por código). Grava o código nas prefs. */
+    suspend fun householdInfo(): Pair<String, String> = withContext(Dispatchers.IO) {
+        refreshIfNeeded()
+        val rows = JSONArray(restGet("households?select=name,invite_code&id=eq.$householdId"))
+        val row = rows.getJSONObject(0)
+        val code = row.getString("invite_code")
+        prefs.edit().putString("invite_code", code).apply()
+        row.getString("name") to code
+    }
+
+    /** Remove um membro da família (remover a si mesmo = sair). Resposta do RPC é vazia. */
+    suspend fun removeMember(userId: String) = withContext(Dispatchers.IO) {
+        refreshIfNeeded()
+        try {
+            restPost("rpc/remove_member", JSONObject().put("p_user_id", userId))
+        } catch (e: IOException) {
+            throw IOException("Não foi possível remover o membro.", e)
+        }
+        Unit
+    }
+
+    /** Sai da família mas mantém a sessão: limpa dados locais e volta para a escolha de família. */
+    suspend fun leaveHousehold() = withContext(Dispatchers.IO) {
+        removeMember(userId!!)
+        prefs.edit().remove("household_id").remove("invite_code").apply()
+        val editor = syncPrefs.edit()
+        syncPrefs.all.keys.filter { it.startsWith("last_pull_") }.forEach { editor.remove(it) }
+        editor.apply()
+        db.clearAllTables()
+        _state.value = AuthState.NeedsHousehold
     }
 
     /** Sai da conta: limpa tokens, cursores de pull e o banco local (dados são da família). */
@@ -108,16 +174,14 @@ class AuthManager(context: Context, private val db: AppDatabase) {
         }
     }
 
-    private suspend fun callRpc(fn: String, body: JSONObject, friendlyError: String) =
+    private suspend fun callRpc(fn: String, body: JSONObject, friendlyError: String): String =
         withContext(Dispatchers.IO) {
             refreshIfNeeded()
-            val response = try {
+            try {
                 restPost("rpc/$fn", body)
             } catch (e: IOException) {
                 throw IOException(friendlyError, e)
             }
-            val json = JSONObject(response)
-            setHousehold(json.getString("id"), json.optStringOrNull("invite_code"))
         }
 
     private fun setHousehold(id: String, inviteCode: String?) {
@@ -129,6 +193,9 @@ class AuthManager(context: Context, private val db: AppDatabase) {
     }
 
     private fun saveSession(response: JSONObject) {
+        val user = response.getJSONObject("user")
+        val name = user.optJSONObject("user_metadata")?.optStringOrNull("name")
+            ?: user.optStringOrNull("email")?.substringBefore("@")
         prefs.edit()
             .putString("access_token", response.getString("access_token"))
             .putString("refresh_token", response.getString("refresh_token"))
@@ -136,7 +203,8 @@ class AuthManager(context: Context, private val db: AppDatabase) {
                 "expires_at",
                 System.currentTimeMillis() / 1000 + response.getLong("expires_in"),
             )
-            .putString("user_id", response.getJSONObject("user").getString("id"))
+            .putString("user_id", user.getString("id"))
+            .putString("user_name", name)
             .apply()
     }
 

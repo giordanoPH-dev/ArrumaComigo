@@ -34,10 +34,10 @@ class HouseholdApplication : Application() {
         if (container.authManager.state.value is AuthState.Ready) {
             startDataFlow()
         }
-        // Sair da conta rearma o fluxo: um novo login (talvez outra família) refaz pull + seed.
+        // Sair da conta OU da família rearma o fluxo: entrar noutra família refaz pull + seed.
         applicationScope.launch {
             container.authManager.state.collect {
-                if (it is AuthState.SignedOut) dataFlowStarted.set(false)
+                if (it !is AuthState.Ready) dataFlowStarted.set(false)
             }
         }
 

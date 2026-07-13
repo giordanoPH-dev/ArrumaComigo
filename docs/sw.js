@@ -1,9 +1,10 @@
-const CACHE = 'ac-v2'; // bump a cada deploy
+const CACHE = 'ac-v3'; // bump a cada deploy
 const SHELL = [
   './', './index.html', './style.css', './manifest.json', './icon-192.png', './icon-512.png',
   './js/app.js', './js/api.js', './js/domain.js', './js/recurrence.js',
   './js/views/login.js', './js/views/today.js', './js/views/rooms.js',
   './js/views/people.js', './js/views/balance.js', './js/views/scenarios.js',
+  './js/views/family.js',
 ];
 
 self.addEventListener('install', (e) =>

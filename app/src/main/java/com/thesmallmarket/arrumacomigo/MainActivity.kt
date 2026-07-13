@@ -19,8 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thesmallmarket.arrumacomigo.auth.AuthState
+import com.thesmallmarket.arrumacomigo.ui.auth.AuthGate
 import com.thesmallmarket.arrumacomigo.ui.auth.HouseholdSetupScreen
-import com.thesmallmarket.arrumacomigo.ui.auth.LoginScreen
 import com.thesmallmarket.arrumacomigo.ui.navigation.ArrumaComigoApp
 import com.thesmallmarket.arrumacomigo.ui.theme.ArrumaComigoTheme
 
@@ -40,11 +40,14 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     when (authState) {
-                        is AuthState.SignedOut -> LoginScreen(app.container.authManager)
+                        is AuthState.SignedOut -> AuthGate(app.container.authManager)
                         is AuthState.NeedsHousehold -> HouseholdSetupScreen(app.container.authManager)
                         is AuthState.Ready -> {
                             LaunchedEffect(authState) { app.startDataFlow() }
-                            ArrumaComigoApp(widthSizeClass = windowSize.widthSizeClass)
+                            ArrumaComigoApp(
+                                widthSizeClass = windowSize.widthSizeClass,
+                                authManager = app.container.authManager,
+                            )
                         }
                     }
                 }

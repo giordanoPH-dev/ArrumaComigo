@@ -14,10 +14,14 @@ export function getSession() {
 }
 
 function saveSession(tokens) {
+  const prev = getSession() || {};
+  const user = tokens.user || {};
   const session = {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
     expires_at: Math.floor(Date.now() / 1000) + tokens.expires_in,
+    user_id: user.id || prev.user_id || null,
+    name: user.user_metadata?.name || (user.email || '').split('@')[0] || prev.name || null,
   };
   localStorage.setItem('ac_session', JSON.stringify(session));
   return session;
@@ -27,6 +31,9 @@ export function clearSession() {
   localStorage.removeItem('ac_session');
   localStorage.removeItem('ac_household');
 }
+
+export const getUserId = () => getSession()?.user_id ?? null;
+export const getUserName = () => getSession()?.name ?? null;
 
 export const getHousehold = () => localStorage.getItem('ac_household');
 export const setHousehold = (id) => localStorage.setItem('ac_household', id);
@@ -56,8 +63,8 @@ export async function signIn(email, password) {
 }
 
 /** Retorna a sessão, ou null se o projeto exigir confirmação de e-mail. */
-export async function signUp(email, password) {
-  const data = await authRequest('signup', { email, password });
+export async function signUp(email, password, name) {
+  const data = await authRequest('signup', { email, password, data: { name } });
   return data.access_token ? saveSession(data) : null;
 }
 

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Group
+import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.MeetingRoom
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +31,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.thesmallmarket.arrumacomigo.auth.AuthManager
 import com.thesmallmarket.arrumacomigo.ui.components.CelebrationOverlay
+import com.thesmallmarket.arrumacomigo.ui.family.FamilyScreen
 import com.thesmallmarket.arrumacomigo.ui.history.HistoryScreen
 import com.thesmallmarket.arrumacomigo.ui.people.PeopleScreen
 import com.thesmallmarket.arrumacomigo.ui.rooms.RoomsScreen
@@ -44,12 +47,13 @@ enum class TopDestination(val route: String, val label: String, val icon: ImageV
     SCENARIOS("scenarios", "Cenários", Icons.Rounded.Checklist),
     PEOPLE("people", "Pessoas", Icons.Rounded.Group),
     HISTORY("history", "Balanço", Icons.Rounded.BarChart),
+    FAMILY("family", "Família", Icons.Rounded.Groups),
 }
 
 private fun taskEditRoute(taskId: Long, roomId: Long) = "task_edit/$taskId/$roomId"
 
 @Composable
-fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass) {
+fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass, authManager: AuthManager) {
     val navController = rememberNavController()
     val expanded = widthSizeClass != WindowWidthSizeClass.Compact
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -70,7 +74,7 @@ fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass) {
                 // Sem Scaffold neste ramo: o padding evita o conteúdo (snackbar, botões)
                 // atrás da barra de navegação do sistema no modo edge-to-edge.
                 Box(Modifier.fillMaxSize().navigationBarsPadding()) {
-                    AppNavHost(navController, twoPane = true)
+                    AppNavHost(navController, twoPane = true, authManager = authManager)
                 }
             }
         } else {
@@ -79,7 +83,7 @@ fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass) {
                 containerColor = MaterialTheme.colorScheme.background,
             ) { padding ->
                 Box(Modifier.fillMaxSize().padding(padding)) {
-                    AppNavHost(navController, twoPane = false)
+                    AppNavHost(navController, twoPane = false, authManager = authManager)
                 }
             }
         }
@@ -89,7 +93,7 @@ fun ArrumaComigoApp(widthSizeClass: WindowWidthSizeClass) {
 }
 
 @Composable
-private fun AppNavHost(navController: NavHostController, twoPane: Boolean) {
+private fun AppNavHost(navController: NavHostController, twoPane: Boolean, authManager: AuthManager) {
     NavHost(navController = navController, startDestination = TopDestination.TODAY.route) {
         composable(TopDestination.TODAY.route) {
             TodayScreen(onTaskClick = { id -> navController.navigate(taskEditRoute(id, 0)) })
@@ -104,6 +108,7 @@ private fun AppNavHost(navController: NavHostController, twoPane: Boolean) {
         composable(TopDestination.SCENARIOS.route) { ScenariosScreen(twoPane = twoPane) }
         composable(TopDestination.PEOPLE.route) { PeopleScreen() }
         composable(TopDestination.HISTORY.route) { HistoryScreen() }
+        composable(TopDestination.FAMILY.route) { FamilyScreen(authManager) }
         composable("task_edit/{taskId}/{roomId}") { entry ->
             val taskId = entry.arguments?.getString("taskId")?.toLongOrNull() ?: 0L
             val roomId = entry.arguments?.getString("roomId")?.toLongOrNull() ?: 0L

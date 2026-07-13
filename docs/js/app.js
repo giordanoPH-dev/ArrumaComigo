@@ -7,8 +7,9 @@ import * as rooms from './views/rooms.js';
 import * as people from './views/people.js';
 import * as balance from './views/balance.js';
 import * as scenarios from './views/scenarios.js';
+import * as family from './views/family.js';
 
-const routes = { hoje: today, comodos: rooms, pessoas: people, balanco: balance, cenarios: scenarios };
+const routes = { hoje: today, comodos: rooms, pessoas: people, balanco: balance, cenarios: scenarios, familia: family };
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');

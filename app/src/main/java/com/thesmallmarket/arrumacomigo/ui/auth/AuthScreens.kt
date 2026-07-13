@@ -35,9 +35,20 @@ import com.thesmallmarket.arrumacomigo.ui.components.NeoCard
 import com.thesmallmarket.arrumacomigo.ui.components.NeoTextField
 import kotlinx.coroutines.launch
 
-/** Tela de login obrigatório com e-mail/senha. Sem ViewModel: estado local + AuthManager direto. */
+/** Alterna entre login e criação de conta. */
 @Composable
-fun LoginScreen(authManager: AuthManager) {
+fun AuthGate(authManager: AuthManager) {
+    var showSignUp by remember { mutableStateOf(false) }
+    if (showSignUp) {
+        SignUpScreen(authManager, onHaveAccount = { showSignUp = false })
+    } else {
+        LoginScreen(authManager, onCreateAccount = { showSignUp = true })
+    }
+}
+
+/** Tela de login com e-mail/senha. Sem ViewModel: estado local + AuthManager direto. */
+@Composable
+fun LoginScreen(authManager: AuthManager, onCreateAccount: () -> Unit) {
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -107,11 +118,105 @@ fun LoginScreen(authManager: AuthManager) {
                 text = "Entrar",
                 onClick = { run { authManager.signIn(email, password) } },
             )
-            NeoButton(
-                text = "Criar conta",
-                primary = false,
-                onClick = { run { authManager.signUp(email, password) } },
-            )
+            TextButton(onClick = onCreateAccount) {
+                Text("Criar uma conta")
+            }
+        }
+        ErrorText(error)
+    }
+}
+
+/** Criação de conta: nome, e-mail, senha e código da família opcional. */
+@Composable
+fun SignUpScreen(authManager: AuthManager, onHaveAccount: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    fun submit() {
+        if (name.isBlank()) {
+            error = "Diga seu nome — é assim que a família vai te ver."
+            return
+        }
+        if (email.isBlank() || password.length < 6) {
+            error = "Informe o e-mail e uma senha de pelo menos 6 caracteres."
+            return
+        }
+        error = null
+        loading = true
+        scope.launch {
+            try {
+                authManager.signUp(name.trim(), email, password)
+                if (code.isNotBlank()) authManager.joinHousehold(code.trim())
+                // Sem código: fetchMembership interno leva a NeedsHousehold.
+            } catch (e: Exception) {
+                error = when {
+                    e.message?.contains("confirme o e-mail") == true ->
+                        "Conta criada! Confirme o e-mail que enviamos e volte em \"Já tenho conta\"."
+                    e.message?.contains("already registered") == true ->
+                        "Este e-mail já tem conta. Use \"Já tenho conta\"."
+                    e.message?.contains("Código de convite inválido") == true -> e.message
+                    else -> "Falha ao conectar. Verifique a internet e tente de novo."
+                }
+            } finally {
+                loading = false
+            }
+        }
+    }
+
+    AuthScaffold {
+        Text("🧹", style = MaterialTheme.typography.displayLarge)
+        Text(
+            "Criar conta",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Text(
+            "Conte quem você é para começar a cuidar da casa em família.",
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(4.dp))
+        NeoTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = "Nome",
+            modifier = Modifier.fillMaxWidth(),
+        )
+        NeoTextField(
+            value = email,
+            onValueChange = { email = it.trim() },
+            label = "E-mail",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        NeoTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = "Senha",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        NeoTextField(
+            value = code,
+            onValueChange = { code = it.uppercase() },
+            label = "Código da família (opcional)",
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+            NeoButton(text = "Criar conta", onClick = { submit() })
+            TextButton(onClick = onHaveAccount) {
+                Text("Já tenho conta")
+            }
         }
         ErrorText(error)
     }
@@ -125,6 +230,7 @@ fun HouseholdSetupScreen(authManager: AuthManager) {
     var name by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var createdCode by remember { mutableStateOf<String?>(null) }
 
     fun run(block: suspend () -> Unit) {
         error = null
@@ -138,6 +244,33 @@ fun HouseholdSetupScreen(authManager: AuthManager) {
                 loading = false
             }
         }
+    }
+
+    createdCode?.let { invite ->
+        AuthScaffold {
+            Text("🎉", style = MaterialTheme.typography.displayLarge)
+            Text(
+                "Família criada!",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+            Text(
+                "Compartilhe este código para a família entrar junto:",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                invite,
+                style = MaterialTheme.typography.displayMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Spacer(Modifier.height(4.dp))
+            NeoButton(text = "Continuar", onClick = { authManager.continueToApp() })
+        }
+        return
     }
 
     AuthScaffold {
@@ -179,7 +312,7 @@ fun HouseholdSetupScreen(authManager: AuthManager) {
             NeoButton(
                 text = "Criar nova família",
                 primary = false,
-                onClick = { if (name.isNotBlank()) run { authManager.createHousehold(name.trim()) } },
+                onClick = { if (name.isNotBlank()) run { createdCode = authManager.createHousehold(name.trim()) } },
             )
         }
         ErrorText(error)

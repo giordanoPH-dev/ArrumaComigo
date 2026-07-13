@@ -11,49 +11,82 @@ export async function render(el) {
 }
 
 function renderAuth(el) {
-  let mode = 'login'; // 'login' | 'signup'
   el.innerHTML = `
     <div class="auth-wrap">
       <h1 class="app-title">🧹 Arruma Comigo</h1>
       <form class="neo-card auth-card" id="auth-form">
-        <h2 id="auth-title">Entrar</h2>
+        <h2>Entrar</h2>
         <input class="neo-input" type="email" id="email" placeholder="E-mail" required autocomplete="email">
         <input class="neo-input" type="password" id="password" placeholder="Senha" required
-               minlength="6" autocomplete="current-password">
+               autocomplete="current-password">
         <p class="error" id="auth-error" hidden></p>
-        <button class="neo-btn" type="submit" id="auth-submit">Entrar</button>
-        <button class="neo-btn-secondary" type="button" id="auth-toggle">Criar uma conta</button>
+        <button class="neo-btn" type="submit">Entrar</button>
+        <button class="neo-btn-secondary" type="button" id="go-signup">Criar uma conta</button>
       </form>
     </div>`;
 
   const error = el.querySelector('#auth-error');
-  el.querySelector('#auth-toggle').onclick = () => {
-    mode = mode === 'login' ? 'signup' : 'login';
-    el.querySelector('#auth-title').textContent = mode === 'login' ? 'Entrar' : 'Criar conta';
-    el.querySelector('#auth-submit').textContent = mode === 'login' ? 'Entrar' : 'Registrar';
-    el.querySelector('#auth-toggle').textContent = mode === 'login' ? 'Criar uma conta' : 'Já tenho conta';
-    error.hidden = true;
-  };
+  el.querySelector('#go-signup').onclick = () => renderSignup(el);
   el.querySelector('#auth-form').onsubmit = async (ev) => {
     ev.preventDefault();
     error.hidden = true;
-    const email = el.querySelector('#email').value.trim();
-    const password = el.querySelector('#password').value;
     try {
-      if (mode === 'login') {
-        await signIn(email, password);
-      } else {
-        const session = await signUp(email, password);
-        if (!session) {
-          error.textContent = 'Conta criada! Confirme o e-mail e depois entre.';
-          error.hidden = false;
-          return;
-        }
-      }
+      await signIn(el.querySelector('#email').value.trim(), el.querySelector('#password').value);
       // Já é membro de uma família? Pula a tela de família.
       const householdId = await fetchMembership().catch(() => null);
       if (householdId) setHousehold(householdId);
       rerender();
+    } catch (e) {
+      error.textContent = e.message;
+      error.hidden = false;
+    }
+  };
+}
+
+function renderSignup(el) {
+  el.innerHTML = `
+    <div class="auth-wrap">
+      <h1 class="app-title">🧹 Arruma Comigo</h1>
+      <form class="neo-card auth-card" id="signup-form">
+        <h2>Criar conta</h2>
+        <input class="neo-input" id="name" placeholder="Nome" required autocomplete="name">
+        <input class="neo-input" type="email" id="email" placeholder="E-mail" required autocomplete="email">
+        <input class="neo-input" type="password" id="password" placeholder="Senha" required
+               minlength="6" autocomplete="new-password">
+        <input class="neo-input" id="invite" placeholder="Código da família (opcional)"
+               style="text-transform: uppercase" autocomplete="off">
+        <p class="error" id="signup-error" hidden></p>
+        <button class="neo-btn" type="submit">Criar conta</button>
+        <button class="neo-btn-secondary" type="button" id="go-login">Já tenho conta</button>
+      </form>
+    </div>`;
+
+  const error = el.querySelector('#signup-error');
+  el.querySelector('#go-login').onclick = () => renderAuth(el);
+  el.querySelector('#signup-form').onsubmit = async (ev) => {
+    ev.preventDefault();
+    error.hidden = true;
+    const code = el.querySelector('#invite').value.trim().toUpperCase();
+    try {
+      const session = await signUp(
+        el.querySelector('#email').value.trim(),
+        el.querySelector('#password').value,
+        el.querySelector('#name').value.trim(),
+      );
+      if (!session) {
+        // Confirmação de e-mail ligada: sem sessão ainda.
+        el.querySelector('#signup-form').innerHTML = `
+          <h2>Criar conta</h2>
+          <p>Conta criada! Confirme o e-mail e depois entre.</p>
+          <button class="neo-btn" type="button" id="go-login2">Ir para Entrar</button>`;
+        el.querySelector('#go-login2').onclick = () => renderAuth(el);
+        return;
+      }
+      if (code) {
+        const result = await rpc('join_household', { p_code: code });
+        setHousehold(result.id);
+      }
+      rerender(); // com família → app; sem → renderFamily
     } catch (e) {
       error.textContent = e.message;
       error.hidden = false;

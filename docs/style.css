@@ -165,6 +165,11 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   border-radius: 14px;
 }
 #nav a span { font-size: 1.3rem; }
+/* 6 itens apertam em telas estreitas */
+@media (max-width: 400px) {
+  #nav a { font-size: 0.62rem; padding: 4px 3px; }
+  #nav a span { font-size: 1.15rem; }
+}
 #nav a.active { color: var(--primary); background: var(--container); font-weight: 700; }
 
 /* ---------- Login / família ---------- */
