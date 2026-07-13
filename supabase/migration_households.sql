@@ -24,10 +24,13 @@ create table household_members (
   primary key (household_id, user_id)
 );
 
+-- (scenarios/scenario_items exigem o DDL novo do schema.sql já aplicado)
 alter table people add column household_id uuid;
 alter table rooms add column household_id uuid;
 alter table tasks add column household_id uuid;
 alter table task_completions add column household_id uuid;
+alter table scenarios add column household_id uuid;
+alter table scenario_items add column household_id uuid;
 
 -- ---------- Adoção dos dados do casal ----------
 
@@ -38,11 +41,15 @@ update people set household_id = '00000000-0000-0000-0000-000000000001';
 update rooms set household_id = '00000000-0000-0000-0000-000000000001';
 update tasks set household_id = '00000000-0000-0000-0000-000000000001';
 update task_completions set household_id = '00000000-0000-0000-0000-000000000001';
+update scenarios set household_id = '00000000-0000-0000-0000-000000000001';
+update scenario_items set household_id = '00000000-0000-0000-0000-000000000001';
 
 alter table people alter column household_id set not null;
 alter table rooms alter column household_id set not null;
 alter table tasks alter column household_id set not null;
 alter table task_completions alter column household_id set not null;
+alter table scenarios alter column household_id set not null;
+alter table scenario_items alter column household_id set not null;
 
 -- ---------- Helper para as policies ----------
 
@@ -59,6 +66,8 @@ alter table people enable row level security;
 alter table rooms enable row level security;
 alter table tasks enable row level security;
 alter table task_completions enable row level security;
+alter table scenarios enable row level security;
+alter table scenario_items enable row level security;
 
 create policy "membros veem as proprias memberships" on household_members
   for select using (user_id = auth.uid());
@@ -79,6 +88,14 @@ create policy "dados da familia" on tasks
   with check (household_id in (select my_households()));
 
 create policy "dados da familia" on task_completions
+  for all using (household_id in (select my_households()))
+  with check (household_id in (select my_households()));
+
+create policy "dados da familia" on scenarios
+  for all using (household_id in (select my_households()))
+  with check (household_id in (select my_households()));
+
+create policy "dados da familia" on scenario_items
   for all using (household_id in (select my_households()))
   with check (household_id in (select my_households()));
 
