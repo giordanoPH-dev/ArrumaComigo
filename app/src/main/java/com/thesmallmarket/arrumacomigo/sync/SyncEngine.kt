@@ -1,6 +1,8 @@
 package com.thesmallmarket.arrumacomigo.sync
 
 import android.content.Context
+import com.thesmallmarket.arrumacomigo.auth.AuthManager
+import com.thesmallmarket.arrumacomigo.auth.AuthState
 import com.thesmallmarket.arrumacomigo.data.entity.PendingDelete
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.Priority
@@ -34,23 +36,31 @@ import java.time.LocalTime
  * Pull: linhas remotas com updated_at > cursor, aplicadas com last-write-wins.
  * Falha de rede aborta silenciosamente — pendingSync garante retentativa no próximo ciclo.
  */
-class SyncEngine(context: Context, private val db: AppDatabase) {
+class SyncEngine(
+    context: Context,
+    private val db: AppDatabase,
+    private val authManager: AuthManager,
+) {
 
     private val prefs = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
     private val mutex = Mutex()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private val canSync: Boolean
+        get() = SyncConfig.isConfigured && authManager.state.value is AuthState.Ready
+
     /** Dispara um ciclo completo em background; erros são engolidos (retry no próximo trigger). */
     fun requestSync() {
-        if (!SyncConfig.isConfigured) return
+        if (!canSync) return
         scope.launch { runCatching { syncOnce() } }
     }
 
     /** Um ciclo completo (pull + push). Usado pelo SyncWorker. */
     suspend fun syncOnce() {
-        if (!SyncConfig.isConfigured) return
+        if (!canSync) return
         withContext(Dispatchers.IO) {
             mutex.withLock {
+                authManager.refreshIfNeeded()
                 pullAll()
                 pushAll()
             }
@@ -59,9 +69,14 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
 
     /** Só o pull, best-effort. Retorna true se completou — gate do HouseSeeder num device novo. */
     suspend fun pullOnce(): Boolean {
-        if (!SyncConfig.isConfigured) return false
+        if (!canSync) return false
         return withContext(Dispatchers.IO) {
-            mutex.withLock { runCatching { pullAll() }.isSuccess }
+            mutex.withLock {
+                runCatching {
+                    authManager.refreshIfNeeded()
+                    pullAll()
+                }.isSuccess
+            }
         }
     }
 
@@ -179,6 +194,8 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
     }
 
     private fun upsert(table: String, row: JSONObject) {
+        // household_id vem das prefs de auth (RLS filtra no servidor; o Room local não o guarda).
+        row.put("household_id", authManager.householdId ?: throw IOException("Sem família ativa"))
         http("POST", "$table?on_conflict=uuid", JSONArray().put(row).toString())
     }
 
@@ -193,8 +210,9 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
             conn.requestMethod = method
             conn.connectTimeout = 15_000
             conn.readTimeout = 15_000
+            val bearer = authManager.bearerOrNull() ?: throw IOException("Sem sessão — sync abortado")
             conn.setRequestProperty("apikey", SyncConfig.SUPABASE_ANON_KEY)
-            conn.setRequestProperty("Authorization", "Bearer ${SyncConfig.SUPABASE_ANON_KEY}")
+            conn.setRequestProperty("Authorization", "Bearer $bearer")
             if (body != null) {
                 conn.doOutput = true
                 conn.setRequestProperty("Content-Type", "application/json")

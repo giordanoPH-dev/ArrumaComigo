@@ -1,6 +1,7 @@
 package com.thesmallmarket.arrumacomigo.di
 
 import android.content.Context
+import com.thesmallmarket.arrumacomigo.auth.AuthManager
 import com.thesmallmarket.arrumacomigo.data.local.AppDatabase
 import com.thesmallmarket.arrumacomigo.data.repository.HouseholdRepository
 import com.thesmallmarket.arrumacomigo.data.repository.OfflineHouseholdRepository
@@ -19,7 +20,9 @@ class AppContainer(context: Context) {
         pendingDeleteDao = database.pendingDeleteDao(),
     )
 
-    val syncEngine = SyncEngine(context.applicationContext, database)
+    val authManager = AuthManager(context.applicationContext, database)
+
+    val syncEngine = SyncEngine(context.applicationContext, database, authManager)
 
     val reminderScheduler = ReminderScheduler(context.applicationContext, repository)
 
