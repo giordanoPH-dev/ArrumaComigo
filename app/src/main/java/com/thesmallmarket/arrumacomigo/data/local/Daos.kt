@@ -9,6 +9,8 @@ import androidx.room.Update
 import com.thesmallmarket.arrumacomigo.data.entity.PendingDelete
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
+import com.thesmallmarket.arrumacomigo.data.entity.Scenario
+import com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
 import kotlinx.coroutines.flow.Flow
@@ -191,6 +193,79 @@ interface TaskCompletionDao {
 
     @Query("SELECT uuid FROM task_completions WHERE taskId IN (SELECT id FROM tasks WHERE roomId = :roomId)")
     suspend fun uuidsByRoom(roomId: Long): List<String>
+}
+
+@Dao
+interface ScenarioDao {
+    @Query("SELECT * FROM scenarios ORDER BY name COLLATE NOCASE")
+    fun getAll(): Flow<List<Scenario>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(scenario: Scenario): Long
+
+    @Update
+    suspend fun update(scenario: Scenario)
+
+    @Delete
+    suspend fun delete(scenario: Scenario)
+
+    // Sync
+    @Query("SELECT * FROM scenarios WHERE pendingSync = 1")
+    suspend fun getPending(): List<Scenario>
+
+    @Query("SELECT * FROM scenarios WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): Scenario?
+
+    @Query("SELECT * FROM scenarios WHERE id = :id")
+    suspend fun getByIdOnce(id: Long): Scenario?
+
+    @Query("UPDATE scenarios SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM scenarios WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
+}
+
+@Dao
+interface ScenarioItemDao {
+    @Query("SELECT * FROM scenario_items WHERE scenarioId = :scenarioId ORDER BY position, id")
+    fun getByScenario(scenarioId: Long): Flow<List<ScenarioItem>>
+
+    @Query("SELECT * FROM scenario_items")
+    fun getAll(): Flow<List<ScenarioItem>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(item: ScenarioItem): Long
+
+    @Update
+    suspend fun update(item: ScenarioItem)
+
+    @Delete
+    suspend fun delete(item: ScenarioItem)
+
+    /** Resetar: desmarca todos os itens marcados do cenário (e os marca para sync). */
+    @Query("UPDATE scenario_items SET checked = 0, updatedAt = :now, pendingSync = 1 WHERE scenarioId = :scenarioId AND checked = 1")
+    suspend fun reset(scenarioId: Long, now: Long)
+
+    // Sync
+    @Query("SELECT * FROM scenario_items WHERE pendingSync = 1")
+    suspend fun getPending(): List<ScenarioItem>
+
+    @Query("SELECT * FROM scenario_items WHERE uuid = :uuid")
+    suspend fun getByUuidOnce(uuid: String): ScenarioItem?
+
+    @Query("SELECT * FROM scenario_items WHERE id = :id")
+    suspend fun getByIdOnce(id: Long): ScenarioItem?
+
+    @Query("UPDATE scenario_items SET pendingSync = 0 WHERE uuid = :uuid AND updatedAt = :updatedAt")
+    suspend fun clearPending(uuid: String, updatedAt: Long)
+
+    @Query("DELETE FROM scenario_items WHERE uuid = :uuid")
+    suspend fun deleteByUuid(uuid: String)
+
+    /** uuids dos itens de um cenário — para tombstonar os filhos que o CASCADE local apaga. */
+    @Query("SELECT uuid FROM scenario_items WHERE scenarioId = :scenarioId")
+    suspend fun uuidsByScenario(scenarioId: Long): List<String>
 }
 
 @Dao

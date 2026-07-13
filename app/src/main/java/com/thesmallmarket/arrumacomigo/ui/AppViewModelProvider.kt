@@ -8,6 +8,7 @@ import com.thesmallmarket.arrumacomigo.HouseholdApplication
 import com.thesmallmarket.arrumacomigo.ui.history.HistoryViewModel
 import com.thesmallmarket.arrumacomigo.ui.people.PeopleViewModel
 import com.thesmallmarket.arrumacomigo.ui.rooms.RoomsViewModel
+import com.thesmallmarket.arrumacomigo.ui.scenarios.ScenariosViewModel
 import com.thesmallmarket.arrumacomigo.ui.tasks.TaskEditViewModel
 import com.thesmallmarket.arrumacomigo.ui.today.TodayViewModel
 
@@ -31,6 +32,9 @@ object AppViewModelProvider {
         }
         initializer {
             HistoryViewModel(arrumaApp().container.repository)
+        }
+        initializer {
+            ScenariosViewModel(arrumaApp().container.repository)
         }
     }
 }

@@ -5,9 +5,15 @@ import com.thesmallmarket.arrumacomigo.data.entity.Priority
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.RoomType
+import com.thesmallmarket.arrumacomigo.data.entity.Scenario
+import com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
 import com.thesmallmarket.arrumacomigo.sync.SyncEngine
+import com.thesmallmarket.arrumacomigo.sync.scenarioFromJson
+import com.thesmallmarket.arrumacomigo.sync.scenarioItemFromJson
+import com.thesmallmarket.arrumacomigo.sync.scenarioItemToJson
+import com.thesmallmarket.arrumacomigo.sync.scenarioToJson
 import com.thesmallmarket.arrumacomigo.sync.completionFromJson
 import com.thesmallmarket.arrumacomigo.sync.completionToJson
 import com.thesmallmarket.arrumacomigo.sync.personFromJson
@@ -116,5 +122,19 @@ class SyncEngineTest {
             localId = 5, taskId = 10, personId = 7,
         )
         assertEquals(completion.copy(pendingSync = false), back)
+    }
+
+    @Test
+    fun `scenario roundtrip`() {
+        val scenario = Scenario(id = 2, name = "Pré-viagem", updatedAt = 111)
+        val back = scenarioFromJson(scenarioToJson(scenario), localId = 2)
+        assertEquals(scenario.copy(pendingSync = false), back)
+    }
+
+    @Test
+    fun `scenario item roundtrip`() {
+        val item = ScenarioItem(id = 4, scenarioId = 2, title = "Regar as plantas", checked = true, position = 3, updatedAt = 222)
+        val back = scenarioItemFromJson(scenarioItemToJson(item, "scenario-uuid"), localId = 4, scenarioId = 2)
+        assertEquals(item.copy(pendingSync = false), back)
     }
 }

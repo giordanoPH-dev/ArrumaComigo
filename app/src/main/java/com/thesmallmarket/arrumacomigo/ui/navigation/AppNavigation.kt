@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Checklist
 import androidx.compose.material.icons.rounded.Group
 import androidx.compose.material.icons.rounded.MeetingRoom
 import androidx.compose.material3.Icon
@@ -33,12 +34,14 @@ import com.thesmallmarket.arrumacomigo.ui.components.CelebrationOverlay
 import com.thesmallmarket.arrumacomigo.ui.history.HistoryScreen
 import com.thesmallmarket.arrumacomigo.ui.people.PeopleScreen
 import com.thesmallmarket.arrumacomigo.ui.rooms.RoomsScreen
+import com.thesmallmarket.arrumacomigo.ui.scenarios.ScenariosScreen
 import com.thesmallmarket.arrumacomigo.ui.tasks.TaskEditScreen
 import com.thesmallmarket.arrumacomigo.ui.today.TodayScreen
 
 enum class TopDestination(val route: String, val label: String, val icon: ImageVector) {
     TODAY("today", "Hoje", Icons.Rounded.CalendarMonth),
     ROOMS("rooms", "Cômodos", Icons.Rounded.MeetingRoom),
+    SCENARIOS("scenarios", "Cenários", Icons.Rounded.Checklist),
     PEOPLE("people", "Pessoas", Icons.Rounded.Group),
     HISTORY("history", "Balanço", Icons.Rounded.BarChart),
 }
@@ -98,6 +101,7 @@ private fun AppNavHost(navController: NavHostController, twoPane: Boolean) {
                 onEditTask = { id -> navController.navigate(taskEditRoute(id, 0)) },
             )
         }
+        composable(TopDestination.SCENARIOS.route) { ScenariosScreen(twoPane = twoPane) }
         composable(TopDestination.PEOPLE.route) { PeopleScreen() }
         composable(TopDestination.HISTORY.route) { HistoryScreen() }
         composable("task_edit/{taskId}/{roomId}") { entry ->

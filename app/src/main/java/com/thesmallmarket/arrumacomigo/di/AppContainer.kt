@@ -17,6 +17,8 @@ class AppContainer(context: Context) {
         taskDao = database.taskDao(),
         completionDao = database.taskCompletionDao(),
         pendingDeleteDao = database.pendingDeleteDao(),
+        scenarioDao = database.scenarioDao(),
+        scenarioItemDao = database.scenarioItemDao(),
     )
 
     val syncEngine = SyncEngine(context.applicationContext, database)

@@ -56,7 +56,26 @@ create table task_completions (
   deleted boolean not null default false
 );
 
+create table scenarios (
+  uuid text primary key,
+  name text not null default '',
+  updated_at bigint not null default 0,
+  deleted boolean not null default false
+);
+
+create table scenario_items (
+  uuid text primary key,
+  scenario_uuid text not null default '',
+  title text not null default '',
+  checked boolean not null default false,
+  position int not null default 0,
+  updated_at bigint not null default 0,
+  deleted boolean not null default false
+);
+
 create index on people (updated_at);
 create index on rooms (updated_at);
 create index on tasks (updated_at);
 create index on task_completions (updated_at);
+create index on scenarios (updated_at);
+create index on scenario_items (updated_at);

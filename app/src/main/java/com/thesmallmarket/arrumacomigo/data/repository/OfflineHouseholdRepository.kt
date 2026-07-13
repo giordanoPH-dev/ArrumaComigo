@@ -6,11 +6,15 @@ import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.RoomType
+import com.thesmallmarket.arrumacomigo.data.entity.Scenario
+import com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
 import com.thesmallmarket.arrumacomigo.data.local.PendingDeleteDao
 import com.thesmallmarket.arrumacomigo.data.local.PersonDao
 import com.thesmallmarket.arrumacomigo.data.local.RoomDao
+import com.thesmallmarket.arrumacomigo.data.local.ScenarioDao
+import com.thesmallmarket.arrumacomigo.data.local.ScenarioItemDao
 import com.thesmallmarket.arrumacomigo.data.local.TaskCompletionDao
 import com.thesmallmarket.arrumacomigo.data.local.TaskDao
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +27,8 @@ class OfflineHouseholdRepository(
     private val taskDao: TaskDao,
     private val completionDao: TaskCompletionDao,
     private val pendingDeleteDao: PendingDeleteDao,
+    private val scenarioDao: ScenarioDao,
+    private val scenarioItemDao: ScenarioItemDao,
 ) : HouseholdRepository {
 
     /** Ligado pelo AppContainer ao SyncEngine — dispara um sync após cada mutação. */
@@ -176,4 +182,33 @@ class OfflineHouseholdRepository(
         completionDao.getBetween(start.toString(), end.toString())
     override suspend fun latestCompletionFor(taskId: Long): TaskCompletion? =
         completionDao.latestForTask(taskId)
+
+    // Cenários
+    override fun scenarios(): Flow<List<Scenario>> = scenarioDao.getAll()
+    override fun scenarioItems(scenarioId: Long): Flow<List<ScenarioItem>> =
+        scenarioItemDao.getByScenario(scenarioId)
+    override fun allScenarioItems(): Flow<List<ScenarioItem>> = scenarioItemDao.getAll()
+    override suspend fun upsertScenario(scenario: Scenario): Long = mutate {
+        val stamped = scenario.copy(updatedAt = now(), pendingSync = true)
+        if (stamped.id == 0L) scenarioDao.insert(stamped) else { scenarioDao.update(stamped); stamped.id }
+    }
+    override suspend fun upsertScenarioItem(item: ScenarioItem): Long = mutate {
+        val stamped = item.copy(updatedAt = now(), pendingSync = true)
+        if (stamped.id == 0L) scenarioItemDao.insert(stamped) else { scenarioItemDao.update(stamped); stamped.id }
+    }
+    override suspend fun deleteScenario(scenario: Scenario) = mutate {
+        // O CASCADE local vai apagar os itens — tombstona todo mundo no remoto.
+        pendingDeleteDao.insertAll(
+            scenarioItemDao.uuidsByScenario(scenario.id).map { PendingDelete(it, PendingDelete.SCENARIO_ITEMS) } +
+                PendingDelete(scenario.uuid, PendingDelete.SCENARIOS)
+        )
+        scenarioDao.delete(scenario)
+    }
+    override suspend fun deleteScenarioItem(item: ScenarioItem) = mutate {
+        pendingDeleteDao.insertAll(listOf(PendingDelete(item.uuid, PendingDelete.SCENARIO_ITEMS)))
+        scenarioItemDao.delete(item)
+    }
+    override suspend fun resetScenario(scenarioId: Long) = mutate {
+        scenarioItemDao.reset(scenarioId, now())
+    }
 }

@@ -7,6 +7,8 @@ import com.thesmallmarket.arrumacomigo.data.entity.Priority
 import com.thesmallmarket.arrumacomigo.data.entity.Recurrence
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.RoomType
+import com.thesmallmarket.arrumacomigo.data.entity.Scenario
+import com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
 import com.thesmallmarket.arrumacomigo.data.local.AppDatabase
@@ -73,6 +75,8 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
         pullTable(PendingDelete.ROOMS) { applyRoom(it) }
         pullTable(PendingDelete.TASKS) { applyTask(it) }
         pullTable(PendingDelete.TASK_COMPLETIONS) { applyCompletion(it) }
+        pullTable(PendingDelete.SCENARIOS) { applyScenario(it) }
+        pullTable(PendingDelete.SCENARIO_ITEMS) { applyScenarioItem(it) }
     }
 
     private suspend fun pullTable(table: String, apply: suspend (JSONObject) -> Unit) {
@@ -103,6 +107,8 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
         PendingDelete.PEOPLE -> db.personDao().deleteByUuid(uuid)
         PendingDelete.ROOMS -> db.roomDao().deleteByUuid(uuid) // CASCADE local limpa tasks/completions
         PendingDelete.TASKS -> db.taskDao().deleteByUuid(uuid)
+        PendingDelete.SCENARIOS -> db.scenarioDao().deleteByUuid(uuid) // CASCADE local limpa os itens
+        PendingDelete.SCENARIO_ITEMS -> db.scenarioItemDao().deleteByUuid(uuid)
         else -> db.taskCompletionDao().deleteByUuid(uuid)
     }
 
@@ -141,6 +147,22 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
         if (local == null) db.taskCompletionDao().insert(completion) else return
     }
 
+    private suspend fun applyScenario(o: JSONObject) {
+        val local = db.scenarioDao().getByUuidOnce(o.getString("uuid"))
+        if (!shouldApplyRemote(local?.updatedAt, o.getLong("updated_at"))) return
+        val scenario = scenarioFromJson(o, localId = local?.id ?: 0)
+        if (local == null) db.scenarioDao().insert(scenario) else db.scenarioDao().update(scenario)
+    }
+
+    private suspend fun applyScenarioItem(o: JSONObject) {
+        val local = db.scenarioItemDao().getByUuidOnce(o.getString("uuid"))
+        if (!shouldApplyRemote(local?.updatedAt, o.getLong("updated_at"))) return
+        // Cenário ainda não existe localmente (ex.: tombstonado) → pula; o próximo pull resolve ou nunca importa.
+        val scenarioId = db.scenarioDao().getByUuidOnce(o.getString("scenario_uuid"))?.id ?: return
+        val item = scenarioItemFromJson(o, localId = local?.id ?: 0, scenarioId = scenarioId)
+        if (local == null) db.scenarioItemDao().insert(item) else db.scenarioItemDao().update(item)
+    }
+
     // ---------- Push ----------
 
     private suspend fun pushAll() {
@@ -175,6 +197,15 @@ class SyncEngine(context: Context, private val db: AppDatabase) {
             val personUuid = c.personId?.let { db.personDao().getByIdOnce(it)?.uuid }
             upsert(PendingDelete.TASK_COMPLETIONS, completionToJson(c, taskUuid, personUuid))
             db.taskCompletionDao().clearPending(c.uuid, c.updatedAt)
+        }
+        for (s in db.scenarioDao().getPending()) {
+            upsert(PendingDelete.SCENARIOS, scenarioToJson(s))
+            db.scenarioDao().clearPending(s.uuid, s.updatedAt)
+        }
+        for (i in db.scenarioItemDao().getPending()) {
+            val scenarioUuid = db.scenarioDao().getByIdOnce(i.scenarioId)?.uuid ?: continue
+            upsert(PendingDelete.SCENARIO_ITEMS, scenarioItemToJson(i, scenarioUuid))
+            db.scenarioItemDao().clearPending(i.uuid, i.updatedAt)
         }
     }
 
@@ -320,3 +351,37 @@ internal fun completionFromJson(o: JSONObject, localId: Long, taskId: Long, pers
         updatedAt = o.getLong("updated_at"),
         pendingSync = false,
     )
+
+internal fun scenarioToJson(s: Scenario): JSONObject = JSONObject()
+    .put("uuid", s.uuid)
+    .put("name", s.name)
+    .put("updated_at", s.updatedAt)
+    .put("deleted", false)
+
+internal fun scenarioFromJson(o: JSONObject, localId: Long): Scenario = Scenario(
+    id = localId,
+    name = o.getString("name"),
+    uuid = o.getString("uuid"),
+    updatedAt = o.getLong("updated_at"),
+    pendingSync = false,
+)
+
+internal fun scenarioItemToJson(i: ScenarioItem, scenarioUuid: String): JSONObject = JSONObject()
+    .put("uuid", i.uuid)
+    .put("scenario_uuid", scenarioUuid)
+    .put("title", i.title)
+    .put("checked", i.checked)
+    .put("position", i.position)
+    .put("updated_at", i.updatedAt)
+    .put("deleted", false)
+
+internal fun scenarioItemFromJson(o: JSONObject, localId: Long, scenarioId: Long): ScenarioItem = ScenarioItem(
+    id = localId,
+    scenarioId = scenarioId,
+    title = o.getString("title"),
+    checked = o.getBoolean("checked"),
+    position = o.getInt("position"),
+    uuid = o.getString("uuid"),
+    updatedAt = o.getLong("updated_at"),
+    pendingSync = false,
+)

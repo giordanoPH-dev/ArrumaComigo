@@ -14,5 +14,7 @@ data class PendingDelete(
         const val ROOMS = "rooms"
         const val TASKS = "tasks"
         const val TASK_COMPLETIONS = "task_completions"
+        const val SCENARIOS = "scenarios"
+        const val SCENARIO_ITEMS = "scenario_items"
     }
 }

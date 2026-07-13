@@ -124,4 +124,12 @@ private class FakeRepo : HouseholdRepository {
     override fun completionsSince(since: LocalDateTime): Flow<List<TaskCompletion>> = flowOf(emptyList())
     override fun completionsBetween(start: LocalDateTime, end: LocalDateTime): Flow<List<TaskCompletion>> = flowOf(emptyList())
     override suspend fun latestCompletionFor(taskId: Long): TaskCompletion? = null
+    override fun scenarios(): Flow<List<com.thesmallmarket.arrumacomigo.data.entity.Scenario>> = flowOf(emptyList())
+    override fun scenarioItems(scenarioId: Long): Flow<List<com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem>> = flowOf(emptyList())
+    override fun allScenarioItems(): Flow<List<com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem>> = flowOf(emptyList())
+    override suspend fun upsertScenario(scenario: com.thesmallmarket.arrumacomigo.data.entity.Scenario): Long = 0
+    override suspend fun upsertScenarioItem(item: com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem): Long = 0
+    override suspend fun deleteScenario(scenario: com.thesmallmarket.arrumacomigo.data.entity.Scenario) {}
+    override suspend fun deleteScenarioItem(item: com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem) {}
+    override suspend fun resetScenario(scenarioId: Long) {}
 }

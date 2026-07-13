@@ -3,6 +3,8 @@ package com.thesmallmarket.arrumacomigo.data.repository
 import com.thesmallmarket.arrumacomigo.data.entity.Person
 import com.thesmallmarket.arrumacomigo.data.entity.RoomEntity
 import com.thesmallmarket.arrumacomigo.data.entity.RoomType
+import com.thesmallmarket.arrumacomigo.data.entity.Scenario
+import com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem
 import com.thesmallmarket.arrumacomigo.data.entity.Task
 import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
 import kotlinx.coroutines.flow.Flow
@@ -80,4 +82,18 @@ interface HouseholdRepository {
 
     /** Conclusão mais recente de uma tarefa, para desfazer via snackbar. */
     suspend fun latestCompletionFor(taskId: Long): TaskCompletion?
+
+    // Cenários (checklists avulsos)
+    fun scenarios(): Flow<List<Scenario>>
+    fun scenarioItems(scenarioId: Long): Flow<List<ScenarioItem>>
+
+    /** Todos os itens de todos os cenários — para o "X de Y feitos" da lista. */
+    fun allScenarioItems(): Flow<List<ScenarioItem>>
+    suspend fun upsertScenario(scenario: Scenario): Long
+    suspend fun upsertScenarioItem(item: ScenarioItem): Long
+    suspend fun deleteScenario(scenario: Scenario)
+    suspend fun deleteScenarioItem(item: ScenarioItem)
+
+    /** Desmarca todos os itens do cenário. */
+    suspend fun resetScenario(scenarioId: Long)
 }
