@@ -58,7 +58,7 @@ ui/          theme, components, navigation, today (calendário semanal com abas 
 - `RoomEntity` (cômodo) é nomeado assim para não colidir com `androidx.room.Room`.
 - Datas/horas (`java.time`) são salvas como strings ISO (ordenáveis) via `Converters`.
 - Tarefa recorrente: ao concluir, `completeTask` grava `TaskCompletion` e avança `nextDueDate` (ou arquiva se não-recorrente).
-- **Seed inicial**: `HouseSeeder.seedIfEmpty` popula o app na primeira abertura (banco vazio) com a rotina da casa descrita em `PLANO_CASA.md` (documento de domínio na raiz — fonte da escala Giordano/Amanda). Com sync configurado, o seed só roda **depois** de um pull bem-sucedido (device novo não duplica a casa).
+- **Seed inicial**: `HouseSeeder.seedIfEmpty` popula o app na primeira abertura (banco vazio) com a rotina padrão da casa (a escala vive no código do seeder). Com sync configurado, o seed só roda **depois** de um pull bem-sucedido (device novo não duplica a casa).
 - **Migrações reais**: `AppDatabase` (versão 3) usa `addMigrations(...)` — os dados agora importam (são a fonte do sync). Mudar schema exige bump de versão + `Migration` nova; os `@ColumnInfo(defaultValue=...)` das colunas de sync precisam bater com o DDL da migração.
 - **Sync**: toda mutação do repositório carimba `updatedAt`/`pendingSync` e dispara `onMutated` → `SyncEngine.requestSync()`. Deletes gravam `PendingDelete` do registro **e dos filhos** que o CASCADE local apaga. Conflitos: last-write-wins por `updatedAt` (relógio do device).
 - Fora de escopo (futuro): rodízio automático, gamificação, lista de compras, realtime do Supabase (polling de 15 min basta; se incomodar, sync no `onStart` da MainActivity antes de considerar realtime).
