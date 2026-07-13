@@ -21,31 +21,54 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.thesmallmarket.arrumacomigo.auth.AuthManager
-import com.thesmallmarket.arrumacomigo.sync.SyncConfig
 import com.thesmallmarket.arrumacomigo.ui.components.NeoButton
 import com.thesmallmarket.arrumacomigo.ui.components.NeoCard
 import com.thesmallmarket.arrumacomigo.ui.components.NeoTextField
 import kotlinx.coroutines.launch
 
-/** Tela de login obrigatório com Google. Sem ViewModel: estado local + AuthManager direto. */
+/** Tela de login obrigatório com e-mail/senha. Sem ViewModel: estado local + AuthManager direto. */
 @Composable
 fun LoginScreen(authManager: AuthManager) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+
+    fun run(block: suspend () -> Unit) {
+        if (email.isBlank() || password.length < 6) {
+            error = "Informe o e-mail e uma senha de pelo menos 6 caracteres."
+            return
+        }
+        error = null
+        loading = true
+        scope.launch {
+            try {
+                block()
+            } catch (e: Exception) {
+                error = when {
+                    e.message?.contains("confirme o e-mail") == true -> e.message
+                    e.message?.contains("invalid_credentials") == true ||
+                        e.message?.contains("Invalid login") == true ->
+                        "E-mail ou senha incorretos."
+                    e.message?.contains("already registered") == true ->
+                        "Este e-mail já tem conta. Use Entrar."
+                    else -> "Falha ao conectar. Verifique a internet e tente de novo."
+                }
+            } finally {
+                loading = false
+            }
+        }
+    }
 
     AuthScaffold {
         Text("🧹", style = MaterialTheme.typography.displayLarge)
@@ -56,42 +79,38 @@ fun LoginScreen(authManager: AuthManager) {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            "Entre com a sua conta Google para cuidar da casa em família.",
+            "Entre com a sua conta para cuidar da casa em família.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
+        NeoTextField(
+            value = email,
+            onValueChange = { email = it.trim() },
+            label = "E-mail",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        NeoTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = "Senha",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+        )
         if (loading) {
             CircularProgressIndicator()
         } else {
             NeoButton(
-                text = "Entrar com Google",
-                onClick = {
-                    error = null
-                    loading = true
-                    scope.launch {
-                        try {
-                            val option = GetGoogleIdOption.Builder()
-                                .setFilterByAuthorizedAccounts(false)
-                                .setServerClientId(SyncConfig.GOOGLE_WEB_CLIENT_ID)
-                                .build()
-                            val result = CredentialManager.create(context).getCredential(
-                                context,
-                                GetCredentialRequest(listOf(option)),
-                            )
-                            val idToken =
-                                GoogleIdTokenCredential.createFrom(result.credential.data).idToken
-                            authManager.signInWithGoogleIdToken(idToken)
-                        } catch (e: GetCredentialException) {
-                            error = "Não foi possível entrar com o Google. Tente de novo."
-                        } catch (e: Exception) {
-                            error = "Falha ao conectar. Verifique a internet e tente de novo."
-                        } finally {
-                            loading = false
-                        }
-                    }
-                },
+                text = "Entrar",
+                onClick = { run { authManager.signIn(email, password) } },
+            )
+            NeoButton(
+                text = "Criar conta",
+                primary = false,
+                onClick = { run { authManager.signUp(email, password) } },
             )
         }
         ErrorText(error)

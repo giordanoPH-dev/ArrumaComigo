@@ -42,12 +42,25 @@ class AuthManager(context: Context, private val db: AppDatabase) {
         else -> AuthState.Ready(householdId!!)
     }
 
-    /** Troca o ID token do Google por uma sessão Supabase e descobre a família do usuário. */
-    suspend fun signInWithGoogleIdToken(idToken: String) = withContext(Dispatchers.IO) {
+    /** Login com e-mail/senha no Supabase e descobre a família do usuário. */
+    suspend fun signIn(email: String, password: String) = withContext(Dispatchers.IO) {
         val response = authHttp(
-            "token?grant_type=id_token",
-            JSONObject().put("provider", "google").put("id_token", idToken),
+            "token?grant_type=password",
+            JSONObject().put("email", email).put("password", password),
         )
+        saveSession(response)
+        fetchMembership()
+    }
+
+    /** Cria a conta e já entra (exige "Confirm email" desabilitado no dashboard do Supabase). */
+    suspend fun signUp(email: String, password: String) = withContext(Dispatchers.IO) {
+        val response = authHttp(
+            "signup",
+            JSONObject().put("email", email).put("password", password),
+        )
+        if (!response.has("access_token")) {
+            throw IOException("Conta criada — confirme o e-mail antes de entrar.")
+        }
         saveSession(response)
         fetchMembership()
     }

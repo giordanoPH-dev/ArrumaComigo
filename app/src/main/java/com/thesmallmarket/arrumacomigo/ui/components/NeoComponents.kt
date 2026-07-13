@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.thesmallmarket.arrumacomigo.ui.theme.neumorphic
@@ -157,6 +158,7 @@ fun NeoTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     isError: Boolean = false,
     errorMessage: String? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
 ) {
     Column(modifier = modifier) {
         Box(Modifier.neumorphic(cornerRadius = 18.dp, pressed = true, elevation = 5.dp)) {
@@ -166,6 +168,7 @@ fun NeoTextField(
                 label = { Text(label) },
                 singleLine = singleLine,
                 keyboardOptions = keyboardOptions,
+                visualTransformation = visualTransformation,
                 isError = isError,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,

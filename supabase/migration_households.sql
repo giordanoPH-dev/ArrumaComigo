@@ -1,7 +1,7 @@
 -- Arruma Comigo — migração: contas + famílias (households) + RLS.
 --
--- ATENÇÃO: rodar no SQL Editor do dashboard SÓ DEPOIS do app novo (com login
--- Google) estar instalado nos devices do casal. Ao ligar o RLS, o app antigo
+-- ATENÇÃO: rodar no SQL Editor do dashboard SÓ DEPOIS do app novo (com login por
+-- e-mail/senha) estar instalado nos devices do casal. Ao ligar o RLS, o app antigo
 -- (anon key sem usuário) para de sincronizar imediatamente.
 --
 -- Adoção dos dados atuais: a família do casal é criada aqui com id fixo e
