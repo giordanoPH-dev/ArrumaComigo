@@ -53,6 +53,8 @@ data class Task(
     val reminderTime: LocalTime? = null,
     val reminderEnabled: Boolean = false,
     val isArchived: Boolean = false,
+    /** Ordem manual na lista (menor = mais acima). */
+    @ColumnInfo(defaultValue = "0") val position: Int = 0,
     @ColumnInfo(defaultValue = "") val uuid: String = newUuid(),
     @ColumnInfo(defaultValue = "0") val updatedAt: Long = 0,
     @ColumnInfo(defaultValue = "1") val pendingSync: Boolean = true,

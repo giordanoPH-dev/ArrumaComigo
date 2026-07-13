@@ -75,6 +75,13 @@ class ScenariosViewModel(private val repository: HouseholdRepository) : ViewMode
         viewModelScope.launch { repository.deleteScenarioItem(item) }
     }
 
+    /** Move o item do checklist de [from] para [to] (renumera as posições). */
+    fun moveItem(from: Int, to: Int) {
+        val current = items.value
+        if (from !in current.indices || to !in current.indices) return
+        viewModelScope.launch { repository.moveScenarioItem(current, from, to) }
+    }
+
     fun toggle(item: ScenarioItem) {
         viewModelScope.launch { repository.upsertScenarioItem(item.copy(checked = !item.checked)) }
     }

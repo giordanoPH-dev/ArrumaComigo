@@ -1,6 +1,6 @@
 // Cenários: checklists reutilizáveis (ex.: "receber visitas").
 
-import { list, esc, newUuid, deleteScenario, resetScenario } from '../domain.js';
+import { list, esc, newUuid, deleteScenario, resetScenario, reorder } from '../domain.js';
 import { upsert, tombstone } from '../api.js';
 
 let currentScenarioUuid = null;
@@ -57,12 +57,14 @@ function renderDetail(el, scenario, items) {
         <button class="neo-btn-secondary" id="del">Excluir</button>
       </div>
     </div>
-    ${items.map((i) => `
+    ${items.map((i, idx) => `
       <div class="neo-card item-row">
         <label class="grow check-row">
           <input type="checkbox" class="neo-check" data-check="${i.uuid}" ${i.checked ? 'checked' : ''}>
           <span class="${i.checked ? 'strike' : ''}">${esc(i.title)}</span>
         </label>
+        <button class="move-btn" data-move-up="${idx}" title="Mover para cima" ${idx === 0 ? 'disabled' : ''}>▲</button>
+        <button class="move-btn" data-move-down="${idx}" title="Mover para baixo" ${idx === items.length - 1 ? 'disabled' : ''}>▼</button>
         <button class="link-btn" data-del-item="${i.uuid}">✕</button>
       </div>`).join('')}
     <form class="add-item-row" id="add-item-form">
@@ -93,6 +95,18 @@ function renderDetail(el, scenario, items) {
       try { await upsert('scenario_items', [{ ...item, checked: box.checked }]); await render(el); }
       catch (e) { alert(e.message); }
     };
+  }
+  const move = (from, to) => async () => {
+    try { await reorder('scenario_items', items, from, to); await render(el); }
+    catch (e) { alert(e.message); }
+  };
+  for (const btn of el.querySelectorAll('[data-move-up]')) {
+    const i = Number(btn.dataset.moveUp);
+    btn.onclick = move(i, i - 1);
+  }
+  for (const btn of el.querySelectorAll('[data-move-down]')) {
+    const i = Number(btn.dataset.moveDown);
+    btn.onclick = move(i, i + 1);
   }
   for (const btn of el.querySelectorAll('[data-del-item]')) {
     btn.onclick = async () => {

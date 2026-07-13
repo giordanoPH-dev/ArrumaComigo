@@ -203,6 +203,11 @@ class TodayViewModel(
         }
     }
 
+    /** Move a tarefa dentro da lista visível de pendentes (renumera as posições). */
+    fun moveTask(tasks: List<Task>, from: Int, to: Int) {
+        viewModelScope.launch { repository.moveTask(tasks, from, to) }
+    }
+
     /** Troca (ou remove) o responsável pela tarefa — troca pontual feita no cartão. */
     fun reassign(task: Task, personId: Long?) {
         viewModelScope.launch {

@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +81,7 @@ fun ScenariosScreen(
                         onToggle = viewModel::toggle,
                         onAddItem = viewModel::addItem,
                         onDeleteItem = viewModel::deleteItem,
+                        onMoveItem = viewModel::moveItem,
                         onReset = viewModel::reset,
                         onDeleteScenario = viewModel::deleteScenario,
                         showBack = false,
@@ -102,6 +106,7 @@ fun ScenariosScreen(
                     onToggle = viewModel::toggle,
                     onAddItem = viewModel::addItem,
                     onDeleteItem = viewModel::deleteItem,
+                    onMoveItem = viewModel::moveItem,
                     onReset = viewModel::reset,
                     onDeleteScenario = viewModel::deleteScenario,
                     showBack = true,
@@ -184,6 +189,7 @@ private fun ScenarioDetailPane(
     onToggle: (ScenarioItem) -> Unit,
     onAddItem: (String) -> Unit,
     onDeleteItem: (ScenarioItem) -> Unit,
+    onMoveItem: (from: Int, to: Int) -> Unit,
     onReset: () -> Unit,
     onDeleteScenario: (Scenario) -> Unit,
     showBack: Boolean,
@@ -256,7 +262,7 @@ private fun ScenarioDetailPane(
                 contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                items(items, key = { it.id }) { item ->
+                itemsIndexed(items, key = { _, it -> it.id }) { index, item ->
                     NeoCard(modifier = Modifier.fillMaxWidth().animateItem()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             NeoCheckbox(checked = item.checked, onCheckedChange = { onToggle(item) })
@@ -272,6 +278,24 @@ private fun ScenarioDetailPane(
                                 },
                                 modifier = Modifier.weight(1f),
                             )
+                            if (index > 0) {
+                                NeoIconButton(
+                                    Icons.Rounded.KeyboardArrowUp,
+                                    onClick = { onMoveItem(index, index - 1) },
+                                    contentDescription = "Mover para cima",
+                                    size = 40.dp,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (index < items.lastIndex) {
+                                NeoIconButton(
+                                    Icons.Rounded.KeyboardArrowDown,
+                                    onClick = { onMoveItem(index, index + 1) },
+                                    contentDescription = "Mover para baixo",
+                                    size = 40.dp,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                             NeoIconButton(
                                 Icons.Rounded.Delete,
                                 onClick = { onDeleteItem(item) },

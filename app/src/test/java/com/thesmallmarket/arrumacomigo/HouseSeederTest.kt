@@ -115,6 +115,7 @@ private class FakeRepo : HouseholdRepository {
     override fun task(id: Long): Flow<Task?> = flowOf(tasks.firstOrNull { it.id == id })
     override suspend fun taskOnce(id: Long): Task? = tasks.firstOrNull { it.id == id }
     override suspend fun deleteTask(task: Task) {}
+    override suspend fun moveTask(tasks: List<Task>, from: Int, to: Int) {}
     override suspend fun tasksWithReminders(): List<Task> = emptyList()
     override suspend fun completeTask(task: Task, completedAt: LocalDateTime): Task? = null
     override suspend fun uncompleteTask(task: Task, completion: TaskCompletion): Task = task
@@ -131,5 +132,6 @@ private class FakeRepo : HouseholdRepository {
     override suspend fun upsertScenarioItem(item: com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem): Long = 0
     override suspend fun deleteScenario(scenario: com.thesmallmarket.arrumacomigo.data.entity.Scenario) {}
     override suspend fun deleteScenarioItem(item: com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem) {}
+    override suspend fun moveScenarioItem(items: List<com.thesmallmarket.arrumacomigo.data.entity.ScenarioItem>, from: Int, to: Int) {}
     override suspend fun resetScenario(scenarioId: Long) {}
 }

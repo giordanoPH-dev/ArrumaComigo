@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -96,6 +97,7 @@ fun RoomsScreen(
                         onAddTask = onAddTask,
                         onEditTask = onEditTask,
                         onToggle = viewModel::toggle,
+                        onMove = viewModel::moveTask,
                         onDeleteRoom = { viewModel.deleteRoom(it) },
                         showBack = false,
                         onBack = {},
@@ -117,6 +119,7 @@ fun RoomsScreen(
                     onAddTask = onAddTask,
                     onEditTask = onEditTask,
                     onToggle = viewModel::toggle,
+                    onMove = viewModel::moveTask,
                     onDeleteRoom = { viewModel.deleteRoom(it) },
                     showBack = true,
                     onBack = { viewModel.select(null) },
@@ -196,6 +199,7 @@ private fun RoomDetailPane(
     onAddTask: (Long) -> Unit,
     onEditTask: (Long) -> Unit,
     onToggle: (com.thesmallmarket.arrumacomigo.ui.TaskCardUi) -> Unit,
+    onMove: (tasks: List<com.thesmallmarket.arrumacomigo.data.entity.Task>, from: Int, to: Int) -> Unit,
     onDeleteRoom: (RoomEntity) -> Unit,
     showBack: Boolean,
     onBack: () -> Unit,
@@ -271,11 +275,14 @@ private fun RoomDetailPane(
                     contentPadding = PaddingValues(vertical = NeumorphicEdgeInset),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    items(tasks, key = { it.task.id }) { item ->
+                    itemsIndexed(tasks, key = { _, it -> it.task.id }) { index, item ->
                         TaskCard(
                             item = item,
                             onToggle = { onToggle(item) },
                             onEdit = { onEditTask(item.task.id) },
+                            // Mover reordena a lista visível (com filtro de dia aplicado, se houver).
+                            onMoveUp = if (index > 0) ({ onMove(tasks.map { it.task }, index, index - 1) }) else null,
+                            onMoveDown = if (index < tasks.lastIndex) ({ onMove(tasks.map { it.task }, index, index + 1) }) else null,
                             showRoom = false,
                             modifier = Modifier.animateItem(),
                         )

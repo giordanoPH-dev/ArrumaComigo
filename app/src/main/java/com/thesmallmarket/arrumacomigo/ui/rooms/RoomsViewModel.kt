@@ -121,6 +121,11 @@ class RoomsViewModel(
         }
     }
 
+    /** Move a tarefa dentro da lista visível do cômodo (renumera as posições). */
+    fun moveTask(tasks: List<Task>, from: Int, to: Int) {
+        viewModelScope.launch { repository.moveTask(tasks, from, to) }
+    }
+
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)

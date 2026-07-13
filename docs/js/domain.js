@@ -47,6 +47,23 @@ const nowTime = () => {
 
 const maxDate = (a, b) => (a > b ? a : b);
 
+/** Ordena por position ASC (sort estável: empate mantém a ordem atual da lista). */
+export const byPosition = (a, b) => (a.position ?? 0) - (b.position ?? 0);
+
+/** Move o item do índice from para to na lista visível e renumera (position = índice).
+ *  Upsert só das linhas cuja position mudou.
+ *  ponytail: renumerar um subconjunto (ex.: só pendentes do Hoje) pode reordenar
+ *  globalmente itens fora dele — aceito. */
+export async function reorder(table, items, from, to) {
+  if (to < 0 || to >= items.length || from === to) return;
+  const arr = [...items];
+  arr.splice(to, 0, arr.splice(from, 1)[0]);
+  const changed = arr
+    .map((it, i) => ({ ...it, position: i }))
+    .filter((it, i) => (arr[i].position ?? 0) !== i);
+  if (changed.length > 0) await upsert(table, changed);
+}
+
 // ---------- Tarefas ----------
 
 /** Conclui no dia da aba: registra completion e avança next_due_date (ou arquiva). */

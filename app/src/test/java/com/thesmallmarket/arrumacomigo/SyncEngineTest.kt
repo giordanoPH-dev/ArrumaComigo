@@ -87,6 +87,7 @@ class SyncEngineTest {
             reminderTime = LocalTime.of(19, 30),
             reminderEnabled = true,
             isArchived = false,
+            position = 4,
             updatedAt = 789,
         )
         val back = taskFromJson(taskToJson(task, "room-uuid", "person-uuid"), localId = 10, roomId = 3, personId = 7)

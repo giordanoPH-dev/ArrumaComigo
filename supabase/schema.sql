@@ -79,3 +79,6 @@ create index on tasks (updated_at);
 create index on task_completions (updated_at);
 create index on scenarios (updated_at);
 create index on scenario_items (updated_at);
+
+-- migração incremental: reordenação (rodar em bancos que já aplicaram o schema acima)
+alter table tasks add column position int not null default 0;

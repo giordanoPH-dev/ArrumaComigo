@@ -20,7 +20,7 @@ import com.thesmallmarket.arrumacomigo.data.entity.TaskCompletion
         Person::class, RoomEntity::class, Task::class, TaskCompletion::class, PendingDelete::class,
         Scenario::class, ScenarioItem::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -92,6 +92,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v4 → v5: ordem manual das tarefas (position). DEFAULT 0 = ordem antiga preservada. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE tasks ADD COLUMN position INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(
@@ -99,7 +106,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "arruma_comigo.db",
                 )
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     .also { INSTANCE = it }
             }

@@ -73,6 +73,12 @@ interface HouseholdRepository {
      */
     suspend fun postponeTask(task: Task): Task
 
+    /**
+     * Move a tarefa de [from] para [to] dentro da lista visível [tasks], renumerando
+     * `position` pelo índice. Só persiste as que mudaram de posição.
+     */
+    suspend fun moveTask(tasks: List<Task>, from: Int, to: Int)
+
     // Histórico
     fun completions(): Flow<List<TaskCompletion>>
     fun completionsSince(since: LocalDateTime): Flow<List<TaskCompletion>>
@@ -93,6 +99,9 @@ interface HouseholdRepository {
     suspend fun upsertScenarioItem(item: ScenarioItem): Long
     suspend fun deleteScenario(scenario: Scenario)
     suspend fun deleteScenarioItem(item: ScenarioItem)
+
+    /** Move o item de [from] para [to] dentro de [items], renumerando `position` pelo índice. */
+    suspend fun moveScenarioItem(items: List<ScenarioItem>, from: Int, to: Int)
 
     /** Desmarca todos os itens do cenário. */
     suspend fun resetScenario(scenarioId: Long)

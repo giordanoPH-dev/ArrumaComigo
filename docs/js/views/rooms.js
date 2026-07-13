@@ -1,7 +1,7 @@
 // Cômodos: grid → detalhe com tarefas → form completo de tarefa.
 
 import { list, esc, newUuid, roomType, ROOM_TYPES, RECURRENCES, PRIORITIES, DAY_LABELS,
-  deleteRoom, deleteTask } from '../domain.js';
+  deleteRoom, deleteTask, byPosition, reorder } from '../domain.js';
 import { upsert } from '../api.js';
 import { firstWeeklyOccurrence, todayStr } from '../recurrence.js';
 
@@ -37,7 +37,7 @@ function renderGrid(el, rooms, tasks) {
 }
 
 function renderDetail(el, room, tasks, people, rooms) {
-  const roomTasks = tasks.filter((t) => t.room_uuid === room.uuid && !t.is_archived);
+  const roomTasks = tasks.filter((t) => t.room_uuid === room.uuid && !t.is_archived).sort(byPosition);
   const personByUuid = Object.fromEntries(people.map((p) => [p.uuid, p]));
   el.innerHTML = `
     <div class="detail-header">
@@ -48,20 +48,26 @@ function renderDetail(el, room, tasks, people, rooms) {
         <button class="neo-btn-secondary" id="del-room">Excluir</button>
       </div>
     </div>
-    ${roomTasks.map((t) => {
+    ${roomTasks.map((t, i) => {
       const person = t.assigned_person_uuid ? personByUuid[t.assigned_person_uuid] : null;
       return `
-      <button class="neo-card task-row" data-task="${t.uuid}">
-        <div class="task-info">
-          <div class="task-title">${esc(t.title)}</div>
-          <div class="task-meta">
-            <span>${RECURRENCES[t.recurrence] ?? t.recurrence}</span>
-            <span class="prio prio-${t.priority}">${PRIORITIES[t.priority] ?? t.priority}</span>
-            <span>vence ${t.next_due_date.slice(8, 10)}/${t.next_due_date.slice(5, 7)}</span>
+      <div class="row-with-move">
+        <button class="neo-card task-row" data-task="${t.uuid}">
+          <div class="task-info">
+            <div class="task-title">${esc(t.title)}</div>
+            <div class="task-meta">
+              <span>${RECURRENCES[t.recurrence] ?? t.recurrence}</span>
+              <span class="prio prio-${t.priority}">${PRIORITIES[t.priority] ?? t.priority}</span>
+              <span>vence ${t.next_due_date.slice(8, 10)}/${t.next_due_date.slice(5, 7)}</span>
+            </div>
           </div>
+          ${person ? `<span class="avatar" style="background:${esc(person.color_hex)}" title="${esc(person.name)}">${person.emoji}</span>` : ''}
+        </button>
+        <div class="move-col">
+          <button class="move-btn" data-move-up="${i}" title="Mover para cima" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="move-btn" data-move-down="${i}" title="Mover para baixo" ${i === roomTasks.length - 1 ? 'disabled' : ''}>▼</button>
         </div>
-        ${person ? `<span class="avatar" style="background:${esc(person.color_hex)}" title="${esc(person.name)}">${person.emoji}</span>` : ''}
-      </button>`;
+      </div>`;
     }).join('')}
     ${roomTasks.length === 0 ? '<p class="empty">Sem tarefas neste cômodo.</p>' : ''}
     <button class="fab" id="add-task" title="Nova tarefa">＋</button>`;
@@ -75,6 +81,18 @@ function renderDetail(el, room, tasks, people, rooms) {
   };
   for (const row of el.querySelectorAll('[data-task]')) {
     row.onclick = () => taskDialog(el, roomTasks.find((t) => t.uuid === row.dataset.task), rooms, people, room);
+  }
+  const move = (from, to) => async () => {
+    try { await reorder('tasks', roomTasks, from, to); await render(el); }
+    catch (e) { alert(e.message); }
+  };
+  for (const btn of el.querySelectorAll('[data-move-up]')) {
+    const i = Number(btn.dataset.moveUp);
+    btn.onclick = move(i, i - 1);
+  }
+  for (const btn of el.querySelectorAll('[data-move-down]')) {
+    const i = Number(btn.dataset.moveDown);
+    btn.onclick = move(i, i + 1);
   }
   el.querySelector('#add-task').onclick = () => taskDialog(el, null, rooms, people, room);
 }
@@ -225,7 +243,7 @@ function taskDialog(el, task, rooms, people, defaultRoom) {
     const minutes = dialog.querySelector('#t-minutes').value;
     try {
       await upsert('tasks', [{
-        ...(task ?? { uuid: newUuid(), is_archived: false, deleted: false }),
+        ...(task ?? { uuid: newUuid(), is_archived: false, deleted: false, position: 0 }),
         title: dialog.querySelector('#t-title').value.trim(),
         room_uuid: dialog.querySelector('#t-room').value,
         assigned_person_uuid: dialog.querySelector('#t-person').value || null,

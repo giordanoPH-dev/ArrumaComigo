@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDropDown
@@ -144,7 +144,11 @@ fun TodayScreen(
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             SectionHeader(group.label, modifier = Modifier.padding(top = 8.dp))
                         }
-                        items(group.items, key = { it.task.id }) { item ->
+                        // Pendentes vêm antes das concluídas (pendingFirst): o índice no grupo
+                        // é o índice entre as pendentes. Só pendentes reordenam.
+                        val pendingTasks = group.items.filter { !it.done }.map { it.task }
+                        itemsIndexed(group.items, key = { _, it -> it.task.id }) { index, item ->
+                            val movable = !item.done
                             TaskCard(
                                 item = item,
                                 onToggle = { viewModel.toggle(item) },
@@ -152,6 +156,10 @@ fun TodayScreen(
                                 // Pular/adiar agem sobre a ocorrência corrente — só fazem sentido hoje.
                                 onSkip = if (isToday) ({ viewModel.skip(item.task) }) else null,
                                 onPostpone = if (isToday) ({ viewModel.postpone(item.task) }) else null,
+                                onMoveUp = if (movable && index > 0)
+                                    ({ viewModel.moveTask(pendingTasks, index, index - 1) }) else null,
+                                onMoveDown = if (movable && index < pendingTasks.lastIndex)
+                                    ({ viewModel.moveTask(pendingTasks, index, index + 1) }) else null,
                                 onPersonClick = if (!isPast) ({ reassignTarget = item }) else null,
                                 modifier = Modifier.animateItem(),
                             )

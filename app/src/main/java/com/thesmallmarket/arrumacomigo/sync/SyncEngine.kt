@@ -324,6 +324,7 @@ internal fun taskToJson(t: Task, roomUuid: String, personUuid: String?): JSONObj
     .put("reminder_time", t.reminderTime?.toString() ?: JSONObject.NULL)
     .put("reminder_enabled", t.reminderEnabled)
     .put("is_archived", t.isArchived)
+    .put("position", t.position)
     .put("updated_at", t.updatedAt)
     .put("deleted", false)
 
@@ -341,6 +342,7 @@ internal fun taskFromJson(o: JSONObject, localId: Long, roomId: Long, personId: 
     reminderTime = o.optStringOrNull("reminder_time")?.let { LocalTime.parse(it) },
     reminderEnabled = o.getBoolean("reminder_enabled"),
     isArchived = o.getBoolean("is_archived"),
+    position = o.getInt("position"),
     uuid = o.getString("uuid"),
     updatedAt = o.getLong("updated_at"),
     pendingSync = false,

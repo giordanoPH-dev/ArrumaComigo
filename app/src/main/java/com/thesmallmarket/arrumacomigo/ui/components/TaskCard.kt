@@ -52,6 +52,7 @@ import com.thesmallmarket.arrumacomigo.ui.isOverdue
 /**
  * Cartão de tarefa. Toque alterna concluída/pendente; segurar abre a edição ([onEdit]).
  * [onSkip]/[onPostpone] (opcionais) abrem um menu para pular a ocorrência ou adiá-la para amanhã.
+ * [onMoveUp]/[onMoveDown] (opcionais) adicionam "Mover para cima/baixo" ao mesmo menu.
  * [onPersonClick] (opcional) torna o avatar clicável para trocar o responsável.
  */
 @Composable
@@ -62,6 +63,8 @@ fun TaskCard(
     onEdit: (() -> Unit)? = null,
     onSkip: (() -> Unit)? = null,
     onPostpone: (() -> Unit)? = null,
+    onMoveUp: (() -> Unit)? = null,
+    onMoveDown: (() -> Unit)? = null,
     onPersonClick: (() -> Unit)? = null,
     showRoom: Boolean = true,
 ) {
@@ -195,13 +198,13 @@ fun TaskCard(
                         )
                     }
                 }
-                if ((onSkip != null || onPostpone != null) && !done) {
+                if ((onSkip != null || onPostpone != null || onMoveUp != null || onMoveDown != null) && !done) {
                     var menuOpen by remember { mutableStateOf(false) }
                     Box {
                         NeoIconButton(
                             icon = Icons.Rounded.Block,
                             onClick = { menuOpen = true },
-                            contentDescription = "Pular ou adiar",
+                            contentDescription = "Ações da tarefa",
                             size = 34.dp,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = if (item.person != null || onPersonClick != null) 6.dp else 0.dp),
@@ -217,6 +220,18 @@ fun TaskCard(
                                 DropdownMenuItem(
                                     text = { Text("Pular esta ocorrência") },
                                     onClick = { menuOpen = false; onSkip() },
+                                )
+                            }
+                            if (onMoveUp != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Mover para cima") },
+                                    onClick = { menuOpen = false; onMoveUp() },
+                                )
+                            }
+                            if (onMoveDown != null) {
+                                DropdownMenuItem(
+                                    text = { Text("Mover para baixo") },
+                                    onClick = { menuOpen = false; onMoveDown() },
                                 )
                             }
                         }

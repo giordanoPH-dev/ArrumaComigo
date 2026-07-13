@@ -106,6 +106,17 @@ class OfflineHouseholdRepository(
     }
     override suspend fun tasksWithReminders(): List<Task> = taskDao.getTasksWithReminders()
 
+    // ponytail: renumerar a lista visível pode reordenar globalmente tarefas fora dela
+    // (a aba Hoje é um subconjunto) — aceito, app de família.
+    override suspend fun moveTask(tasks: List<Task>, from: Int, to: Int) = mutate {
+        val reordered = tasks.toMutableList().apply { add(to, removeAt(from)) }
+        reordered.forEachIndexed { index, task ->
+            if (task.position != index) {
+                taskDao.update(task.copy(position = index, updatedAt = now(), pendingSync = true))
+            }
+        }
+    }
+
     override suspend fun completeTask(task: Task, completedAt: LocalDateTime): Task? = mutate {
         completionDao.insert(
             TaskCompletion(
@@ -207,6 +218,14 @@ class OfflineHouseholdRepository(
     override suspend fun deleteScenarioItem(item: ScenarioItem) = mutate {
         pendingDeleteDao.insertAll(listOf(PendingDelete(item.uuid, PendingDelete.SCENARIO_ITEMS)))
         scenarioItemDao.delete(item)
+    }
+    override suspend fun moveScenarioItem(items: List<ScenarioItem>, from: Int, to: Int) = mutate {
+        val reordered = items.toMutableList().apply { add(to, removeAt(from)) }
+        reordered.forEachIndexed { index, item ->
+            if (item.position != index) {
+                scenarioItemDao.update(item.copy(position = index, updatedAt = now(), pendingSync = true))
+            }
+        }
     }
     override suspend fun resetScenario(scenarioId: Long) = mutate {
         scenarioItemDao.reset(scenarioId, now())

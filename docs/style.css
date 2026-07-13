@@ -111,6 +111,26 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
 }
 .fab:active { background: var(--primary-dark); }
 
+/* Botões de reordenar (▲/▼) */
+.move-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--primary);
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 3px 3px 6px var(--lo), -3px -3px 6px var(--hi);
+}
+.move-btn:disabled { opacity: 0.35; cursor: default; }
+.move-btn:active:not(:disabled) { box-shadow: inset 2px 2px 4px var(--lo), inset -2px -2px 4px var(--hi); }
+.row-with-move { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.row-with-move .neo-card { flex: 1; min-width: 0; margin-bottom: 0; }
+.move-col { display: flex; flex-direction: column; gap: 6px; }
+
 .link-btn {
   border: none;
   background: none;

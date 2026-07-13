@@ -1,7 +1,7 @@
 // Aba Hoje: calendário semanal seg→dom com abas por dia (semântica do TodayViewModel.kt).
 
 import { list, esc, roomType, PRIORITIES, DAY_LABELS,
-  completeTask, uncompleteTask, skipTask, postponeTask } from '../domain.js';
+  completeTask, uncompleteTask, skipTask, postponeTask, byPosition, reorder } from '../domain.js';
 import { occursOn, progressFraction, todayStr, addDays } from '../recurrence.js';
 
 let selectedDate = null; // aba escolhida; null = hoje
@@ -36,7 +36,8 @@ export async function render(el) {
 
   const pending = tasks.filter((t) =>
     !t.is_archived && !doneByTask[t.uuid] &&
-    occursOn(t.next_due_date, t.recurrence, t.recurrence_interval, t.days_of_week, date, today));
+    occursOn(t.next_due_date, t.recurrence, t.recurrence_interval, t.days_of_week, date, today))
+    .sort(byPosition);
 
   const tabs = week.map((day, i) => `
     <button class="day-tab ${day === date ? 'chip-on' : ''}" data-date="${day}">
@@ -44,7 +45,7 @@ export async function render(el) {
       ${day === today ? '<em>hoje</em>' : ''}
     </button>`).join('');
 
-  const card = (task, completion) => {
+  const card = (task, completion, idx) => {
     const room = roomByUuid[task.room_uuid];
     const person = task.assigned_person_uuid ? personByUuid[task.assigned_person_uuid] : null;
     const done = Boolean(completion);
@@ -74,6 +75,8 @@ export async function render(el) {
       </label>
       ${!done ? `
       <div class="task-actions">
+        <button class="move-btn" data-move-up="${idx}" title="Mover para cima" ${idx === 0 ? 'disabled' : ''}>▲</button>
+        <button class="move-btn" data-move-down="${idx}" title="Mover para baixo" ${idx === pending.length - 1 ? 'disabled' : ''}>▼</button>
         <button class="link-btn" data-skip="${task.uuid}">Pular</button>
         <button class="link-btn" data-postpone="${task.uuid}">Adiar</button>
       </div>` : ''}
@@ -84,7 +87,7 @@ export async function render(el) {
     <div class="week-tabs">${tabs}</div>
     ${pending.length + completionsOnDay.length === 0
       ? '<p class="empty">Nada por aqui. Dia livre! 🎉</p>'
-      : pending.map((t) => card(t, null)).join('') +
+      : pending.map((t, i) => card(t, null, i)).join('') +
         completionsOnDay.map((c) => taskByUuid[c.task_uuid] ? card(taskByUuid[c.task_uuid], c) : '').join('')}`;
 
   for (const btn of el.querySelectorAll('.day-tab')) {
@@ -110,5 +113,18 @@ export async function render(el) {
   }
   for (const btn of el.querySelectorAll('[data-postpone]')) {
     btn.onclick = act(btn.dataset.postpone, () => postponeTask(taskByUuid[btn.dataset.postpone]));
+  }
+  // Reordenar só as pendentes (concluídas ficam onde estão).
+  const move = (from, to) => async () => {
+    try { await reorder('tasks', pending, from, to); await render(el); }
+    catch (e) { alert(e.message); }
+  };
+  for (const btn of el.querySelectorAll('[data-move-up]')) {
+    const i = Number(btn.dataset.moveUp);
+    btn.onclick = move(i, i - 1);
+  }
+  for (const btn of el.querySelectorAll('[data-move-down]')) {
+    const i = Number(btn.dataset.moveDown);
+    btn.onclick = move(i, i + 1);
   }
 }

@@ -94,16 +94,17 @@ interface RoomDao {
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks WHERE isArchived = 0 ORDER BY nextDueDate, priority DESC")
+    // Ordem manual (position) primeiro; a ordenação antiga vira desempate.
+    @Query("SELECT * FROM tasks WHERE isArchived = 0 ORDER BY position, nextDueDate, priority DESC")
     fun getAllActive(): Flow<List<Task>>
 
-    @Query("SELECT * FROM tasks ORDER BY nextDueDate, priority DESC")
+    @Query("SELECT * FROM tasks ORDER BY position, nextDueDate, priority DESC")
     fun getAll(): Flow<List<Task>>
 
-    @Query("SELECT * FROM tasks WHERE roomId = :roomId AND isArchived = 0 ORDER BY nextDueDate")
+    @Query("SELECT * FROM tasks WHERE roomId = :roomId AND isArchived = 0 ORDER BY position, nextDueDate")
     fun getByRoom(roomId: Long): Flow<List<Task>>
 
-    @Query("SELECT * FROM tasks WHERE isArchived = 0 AND nextDueDate <= :date ORDER BY nextDueDate, priority DESC")
+    @Query("SELECT * FROM tasks WHERE isArchived = 0 AND nextDueDate <= :date ORDER BY position, nextDueDate, priority DESC")
     fun getDueOnOrBefore(date: LocalDate): Flow<List<Task>>
 
     /** Agenda de hoje: pendentes (vencidas até hoje) + as já concluídas hoje, para permanecerem visíveis. */
@@ -112,7 +113,7 @@ interface TaskDao {
         SELECT * FROM tasks
         WHERE (isArchived = 0 AND nextDueDate <= :date)
            OR id IN (SELECT taskId FROM task_completions WHERE completedAt >= :startOfDay)
-        ORDER BY nextDueDate, priority DESC
+        ORDER BY position, nextDueDate, priority DESC
         """
     )
     fun getTodayView(date: LocalDate, startOfDay: LocalDateTime): Flow<List<Task>>
