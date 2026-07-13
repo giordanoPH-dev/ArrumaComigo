@@ -1,0 +1,309 @@
+/* Arruma Comigo — neumorfismo roxo/lavanda, mobile-first, uma coluna. */
+
+:root {
+  --bg: #ECEAF3;
+  --primary: #6C4DDB;
+  --primary-dark: #5739C4;
+  --container: #E3DCFA;
+  --ink: #2C2A45;
+  --muted: #6A6781;
+  --error: #E5484D;
+  --hi: #FFF;
+  --lo: #C7C1DB;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  padding-bottom: 84px; /* espaço para a nav fixa */
+}
+
+#view {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 { font-size: 1.5rem; margin: 8px 0 16px; }
+h2 { font-size: 1.1rem; margin: 4px 0 12px; }
+.muted { color: var(--muted); font-size: 0.85rem; }
+.error { color: var(--error); }
+.empty, .loading { color: var(--muted); text-align: center; margin: 32px 0; }
+.grow { flex: 1; min-width: 0; }
+.strike { text-decoration: line-through; color: var(--muted); }
+
+/* ---------- Neumorfismo ---------- */
+
+.neo-card {
+  background: var(--bg);
+  border: none;
+  border-radius: 20px;
+  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.neo-btn, .neo-btn-secondary {
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
+}
+.neo-btn { background: var(--primary); color: #fff; font-weight: 600; }
+.neo-btn:active { background: var(--primary-dark); box-shadow: inset 4px 4px 8px rgba(0,0,0,0.25); }
+.neo-btn-secondary { background: var(--bg); color: var(--ink); }
+.neo-btn-secondary:active { box-shadow: inset 4px 4px 8px var(--lo), inset -4px -4px 8px var(--hi); }
+
+.neo-input {
+  width: 100%;
+  border: none;
+  border-radius: 20px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  box-shadow: inset 4px 4px 8px var(--lo), inset -4px -4px 8px var(--hi);
+}
+.neo-input:focus { outline: 2px solid var(--primary); }
+
+.neo-check { width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0; }
+
+.chip {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+}
+.chip-on {
+  background: var(--primary) !important;
+  color: #fff !important;
+  box-shadow: inset 3px 3px 6px rgba(0,0,0,0.25) !important;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 92px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
+}
+.fab:active { background: var(--primary-dark); }
+
+.link-btn {
+  border: none;
+  background: none;
+  color: var(--primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+/* ---------- Nav inferior ---------- */
+
+#nav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  background: var(--bg);
+  box-shadow: 0 -4px 12px var(--lo);
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+}
+#nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 14px;
+}
+#nav a span { font-size: 1.3rem; }
+#nav a.active { color: var(--primary); background: var(--container); font-weight: 700; }
+
+/* ---------- Login / família ---------- */
+
+.auth-wrap { max-width: 380px; margin: 0 auto; padding-top: 24px; }
+.app-title { text-align: center; color: var(--primary); }
+.auth-card { display: flex; flex-direction: column; gap: 12px; }
+.invite-code {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--primary);
+  background: var(--container);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+/* ---------- Aba Hoje ---------- */
+
+.week-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 2px 16px;
+}
+.day-tab {
+  flex: 1;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  border-radius: 16px;
+  padding: 8px 4px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+}
+.day-tab span { font-size: 0.7rem; color: inherit; }
+.day-tab em { font-size: 0.6rem; font-style: normal; }
+
+.task-card.done { opacity: 0.6; }
+.task-main { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.task-info { flex: 1; min-width: 0; }
+.task-title { font-weight: 700; }
+.task-card.done .task-title { text-decoration: line-through; }
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.overdue { color: var(--error); font-weight: 700; }
+.prio-HIGH { color: var(--error); }
+.prio-LOW { color: var(--muted); }
+.task-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; }
+
+.progress {
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 8px;
+  background: var(--container);
+  box-shadow: inset 2px 2px 4px var(--lo);
+  overflow: hidden;
+}
+.progress-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  background: var(--container);
+}
+.avatar-lg { width: 48px; height: 48px; font-size: 1.5rem; }
+
+/* ---------- Cômodos ---------- */
+
+.room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+.room-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+  margin-bottom: 0;
+}
+.room-emoji { font-size: 2rem; }
+
+.detail-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+.detail-header h1 { flex: 1; margin: 0; min-width: 0; }
+
+.task-row, .scenario-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* ---------- Pessoas / Balanço / Cenários ---------- */
+
+.person-row, .item-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.balance-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+.balance-total { border-top: 1px solid var(--lo); margin-top: 8px; padding-top: 12px; }
+.check-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.add-item-row { display: flex; gap: 10px; margin-top: 16px; }
+
+.pick-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.pick {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  background: var(--bg);
+  cursor: pointer;
+  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+}
+.pick.chip-on { outline: 3px solid var(--ink); }
+.color-pick.chip-on { box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3); }
+
+/* ---------- Dialog ---------- */
+
+dialog {
+  border: none;
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--ink);
+  padding: 20px;
+  width: min(420px, calc(100vw - 32px));
+  max-height: 85vh;
+}
+dialog::backdrop { background: rgba(44, 42, 69, 0.4); }
+.dialog-form { display: flex; flex-direction: column; gap: 12px; }
+.dialog-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
+.dialog-form .check-row { flex-direction: row; }
+.field-label { font-size: 0.9rem; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
+.error-card { text-align: center; }

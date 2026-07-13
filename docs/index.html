@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#6C4DDB">
+  <title>Arruma Comigo</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="view"></main>
+  <nav id="nav" hidden>
+    <a href="#hoje"><span>📅</span>Hoje</a>
+    <a href="#comodos"><span>🏠</span>Cômodos</a>
+    <a href="#pessoas"><span>👥</span>Pessoas</a>
+    <a href="#balanco"><span>⚖️</span>Balanço</a>
+    <a href="#cenarios"><span>✨</span>Cenários</a>
+  </nav>
+  <script type="module" src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
+</body>
+</html>
