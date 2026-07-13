@@ -18,3 +18,4 @@ local.properties
 # Build outputs
 app/build/
 build/
+supabase/.temp/
