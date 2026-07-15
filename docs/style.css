@@ -1,35 +1,102 @@
-/* Arruma Comigo — neumorfismo roxo/lavanda, mobile-first, uma coluna. */
+/* Arruma Comigo — paridade visual com o app Android.
+   Neumorfismo roxo/lavanda, fontes Fredoka (títulos) + Nunito (corpo),
+   tema claro + escuro (segue o sistema), mobile-first, uma coluna. */
+
+/* ---------- Fontes empacotadas (variáveis, iguais ao app) ---------- */
+
+@font-face {
+  font-family: 'Fredoka';
+  src: url('fonts/fredoka.ttf') format('truetype-variations');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Nunito';
+  src: url('fonts/nunito.ttf') format('truetype-variations');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------- Tokens (tema claro = paleta lavanda do app) ---------- */
 
 :root {
   --bg: #ECEAF3;
   --primary: #6C4DDB;
   --primary-dark: #5739C4;
+  --on-primary: #FFFFFF;      /* texto sobre superfície primária preenchida */
   --container: #E3DCFA;
   --ink: #2C2A45;
   --muted: #6A6781;
   --error: #E5484D;
-  --hi: #FFF;
+  /* sombras neumórficas */
+  --hi: #FFFFFF;
   --lo: #C7C1DB;
+  /* gloss dos avatares (bolha skeumórfica) */
+  --gloss-hi: rgba(255, 255, 255, 0.4);
+  --gloss-lo: rgba(0, 0, 0, 0.15);
+  /* check do checkbox (roxo primário, URL-encoded) */
+  --check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236C4DDB' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  color-scheme: light;
 }
 
+/* Tema escuro (mesmos valores do DarkColors do app) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1E1B2E;
+    --primary: #B9A7FF;
+    --primary-dark: #A78EFF;
+    --on-primary: #2A1D5E;
+    --container: #3A2F66;
+    --ink: #E9E6F4;
+    --muted: #A9A4C2;
+    --error: #E5484D;
+    --hi: #2B2740;
+    --lo: #131120;
+    --gloss-hi: rgba(255, 255, 255, 0.18);
+    --gloss-lo: rgba(0, 0, 0, 0.35);
+    --check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B9A7FF' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Base ---------- */
+
 * { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, sans-serif;
-  padding-bottom: 84px; /* espaço para a nav fixa */
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
 }
 
 #view {
   max-width: 640px;
   margin: 0 auto;
   padding: 16px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
 }
 
-h1 { font-size: 1.5rem; margin: 8px 0 16px; }
-h2 { font-size: 1.1rem; margin: 4px 0 12px; }
+/* Títulos em Fredoka (arredondada), como no app. */
+h1, h2, h3, .app-title, .task-title, .invite-code, .room-card {
+  font-family: 'Fredoka', system-ui, sans-serif;
+}
+h1 { font-size: 1.6rem; font-weight: 600; margin: 8px 0 16px; letter-spacing: 0.2px; }
+h2 { font-size: 1.2rem; font-weight: 500; margin: 4px 0 12px; }
 .muted { color: var(--muted); font-size: 0.85rem; }
 .error { color: var(--error); }
 .empty, .loading { color: var(--muted); text-align: center; margin: 32px 0; }
@@ -41,75 +108,110 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
 .neo-card {
   background: var(--bg);
   border: none;
-  border-radius: 20px;
-  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
-  padding: 16px;
+  border-radius: 24px;
+  box-shadow: 8px 8px 16px var(--lo), -8px -8px 16px var(--hi);
+  padding: 18px;
   margin-bottom: 16px;
 }
 
+/* Botões: pílula neumórfica em relevo (igual ao NeoButton do app);
+   o "primário" difere só pela cor do texto (roxo). */
 .neo-btn, .neo-btn-secondary {
   border: none;
   border-radius: 20px;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-family: inherit;
+  padding: 14px 22px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: var(--bg);
   cursor: pointer;
-  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
+  box-shadow: 7px 7px 14px var(--lo), -7px -7px 14px var(--hi);
+  transition: box-shadow 0.08s ease;
 }
-.neo-btn { background: var(--primary); color: #fff; font-weight: 600; }
-.neo-btn:active { background: var(--primary-dark); box-shadow: inset 4px 4px 8px rgba(0,0,0,0.25); }
-.neo-btn-secondary { background: var(--bg); color: var(--ink); }
-.neo-btn-secondary:active { box-shadow: inset 4px 4px 8px var(--lo), inset -4px -4px 8px var(--hi); }
+.neo-btn { color: var(--primary); }
+.neo-btn-secondary { color: var(--ink); }
+.neo-btn:active, .neo-btn-secondary:active {
+  box-shadow: inset 5px 5px 10px var(--lo), inset -5px -5px 10px var(--hi);
+}
 
 .neo-input {
   width: 100%;
   border: none;
-  border-radius: 20px;
-  padding: 12px 16px;
+  border-radius: 18px;
+  padding: 13px 16px;
   font-size: 1rem;
-  font-family: inherit;
+  font-family: 'Nunito', system-ui, sans-serif;
   color: var(--ink);
   background: var(--bg);
-  box-shadow: inset 4px 4px 8px var(--lo), inset -4px -4px 8px var(--hi);
+  box-shadow: inset 5px 5px 10px var(--lo), inset -5px -5px 10px var(--hi);
 }
 .neo-input:focus { outline: 2px solid var(--primary); }
+.neo-input::placeholder { color: var(--muted); }
 
-.neo-check { width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0; }
+/* Checkbox neumórfico (igual ao NeoCheckbox do app):
+   relevo quando vazio, afundado + check roxo quando marcado. */
+.neo-check {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 15px;
+  background-color: var(--bg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 58%;
+  box-shadow: 5px 5px 10px var(--lo), -5px -5px 10px var(--hi);
+  cursor: pointer;
+  transition: box-shadow 0.1s ease;
+}
+.neo-check:checked {
+  background-image: var(--check);
+  box-shadow: inset 4px 4px 8px var(--lo), inset -4px -4px 8px var(--hi);
+}
 
 .chip {
   border: none;
   border-radius: 20px;
-  padding: 8px 14px;
-  font-family: inherit;
+  padding: 9px 15px;
+  font-family: 'Nunito', system-ui, sans-serif;
   font-size: 0.9rem;
+  font-weight: 600;
   background: var(--bg);
   color: var(--ink);
   cursor: pointer;
-  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+  box-shadow: 5px 5px 10px var(--lo), -5px -5px 10px var(--hi);
 }
 .chip-on {
   background: var(--primary) !important;
-  color: #fff !important;
-  box-shadow: inset 3px 3px 6px rgba(0,0,0,0.25) !important;
+  color: var(--on-primary) !important;
+  box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.25) !important;
 }
 .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 
+/* "Adicionar": círculo neumórfico com + roxo (o app não tem FAB preenchido). */
 .fab {
   position: fixed;
-  right: 20px;
-  bottom: 92px;
-  width: 56px;
-  height: 56px;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 60px;
+  height: 60px;
   border: none;
   border-radius: 50%;
-  background: var(--primary);
-  color: #fff;
-  font-size: 1.8rem;
+  background: var(--bg);
+  color: var(--primary);
+  font-size: 2rem;
+  font-weight: 400;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 6px 6px 12px var(--lo), -6px -6px 12px var(--hi);
+  box-shadow: 7px 7px 14px var(--lo), -7px -7px 14px var(--hi);
+  transition: box-shadow 0.08s ease;
 }
-.fab:active { background: var(--primary-dark); }
+.fab:active {
+  box-shadow: inset 5px 5px 10px var(--lo), inset -5px -5px 10px var(--hi);
+}
 
 /* Botões de reordenar (▲/▼) */
 .move-btn {
@@ -135,9 +237,9 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   border: none;
   background: none;
   color: var(--primary);
-  font-family: inherit;
+  font-family: 'Nunito', system-ui, sans-serif;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   padding: 6px 8px;
 }
@@ -150,7 +252,7 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   display: flex;
   justify-content: space-around;
   background: var(--bg);
-  box-shadow: 0 -4px 12px var(--lo);
+  box-shadow: 0 -4px 16px var(--lo);
   padding: 6px 0 max(6px, env(safe-area-inset-bottom));
 }
 #nav a {
@@ -160,7 +262,9 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   gap: 2px;
   text-decoration: none;
   color: var(--muted);
+  font-family: 'Nunito', system-ui, sans-serif;
   font-size: 0.7rem;
+  font-weight: 600;
   padding: 4px 8px;
   border-radius: 14px;
 }
@@ -175,12 +279,12 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
 /* ---------- Login / família ---------- */
 
 .auth-wrap { max-width: 380px; margin: 0 auto; padding-top: 24px; }
-.app-title { text-align: center; color: var(--primary); }
+.app-title { text-align: center; color: var(--primary); font-weight: 600; }
 .auth-card { display: flex; flex-direction: column; gap: 12px; }
 .invite-code {
   text-align: center;
   font-size: 1.8rem;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 4px;
   color: var(--primary);
   background: var(--container);
@@ -208,17 +312,19 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   padding: 8px 4px;
   background: var(--bg);
   color: var(--ink);
-  font-family: inherit;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
 }
+.day-tab strong { font-family: 'Fredoka', system-ui, sans-serif; font-weight: 500; font-size: 1.05rem; }
 .day-tab span { font-size: 0.7rem; color: inherit; }
 .day-tab em { font-size: 0.6rem; font-style: normal; }
 
-.task-card.done { opacity: 0.6; }
-.task-main { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.task-card.done { opacity: 0.55; }
+.task-main { display: flex; align-items: center; gap: 14px; cursor: pointer; }
 .task-info { flex: 1; min-width: 0; }
-.task-title { font-weight: 700; }
+.task-title { font-weight: 500; font-size: 1.05rem; }
 .task-card.done .task-title { text-decoration: line-through; }
 .task-meta {
   display: flex;
@@ -226,35 +332,41 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   gap: 10px;
   color: var(--muted);
   font-size: 0.8rem;
-  margin-top: 4px;
+  margin-top: 6px;
 }
+.task-meta .prio, .task-meta span:not(.avatar) { font-weight: 600; }
 .overdue { color: var(--error); font-weight: 700; }
 .prio-HIGH { color: var(--error); }
 .prio-LOW { color: var(--muted); }
-.task-actions { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; }
+.task-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 6px; }
 
 .progress {
   height: 6px;
   border-radius: 3px;
-  margin-top: 8px;
+  margin-top: 10px;
   background: var(--container);
   box-shadow: inset 2px 2px 4px var(--lo);
   overflow: hidden;
 }
 .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; }
 
+/* Avatar: bolha neumórfica em relevo com gloss (como o PersonAvatar do app).
+   A cor da pessoa vem inline via style="background:…". */
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   flex-shrink: 0;
   background: var(--container);
+  box-shadow:
+    4px 4px 8px var(--lo), -4px -4px 8px var(--hi),
+    inset 2px 2px 3px var(--gloss-hi), inset -2px -2px 3px var(--gloss-lo);
 }
-.avatar-lg { width: 48px; height: 48px; font-size: 1.5rem; }
+.avatar-lg { width: 52px; height: 52px; font-size: 1.6rem; }
 
 /* ---------- Cômodos ---------- */
 
@@ -268,8 +380,8 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-family: inherit;
   font-size: 1rem;
+  font-weight: 500;
   color: var(--ink);
   cursor: pointer;
   margin-bottom: 0;
@@ -285,7 +397,7 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   gap: 12px;
   width: 100%;
   text-align: left;
-  font-family: inherit;
+  font-family: 'Nunito', system-ui, sans-serif;
   font-size: 1rem;
   color: var(--ink);
   cursor: pointer;
@@ -311,24 +423,25 @@ h2 { font-size: 1.1rem; margin: 4px 0 12px; }
   box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
 }
 .pick.chip-on { outline: 3px solid var(--ink); }
-.color-pick.chip-on { box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3); }
+.color-pick.chip-on { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3); }
 
 /* ---------- Dialog ---------- */
 
 dialog {
   border: none;
-  border-radius: 20px;
+  border-radius: 24px;
   background: var(--bg);
   color: var(--ink);
   padding: 20px;
   width: min(420px, calc(100vw - 32px));
   max-height: 85vh;
+  box-shadow: 10px 10px 24px var(--lo), -10px -10px 24px var(--hi);
 }
-dialog::backdrop { background: rgba(44, 42, 69, 0.4); }
+dialog::backdrop { background: rgba(30, 27, 46, 0.45); }
 .dialog-form { display: flex; flex-direction: column; gap: 12px; }
 .dialog-form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.9rem; }
 .dialog-form .check-row { flex-direction: row; }
-.field-label { font-size: 0.9rem; }
+.field-label { font-size: 0.9rem; font-weight: 600; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px; }
 
 .error-card { text-align: center; }
