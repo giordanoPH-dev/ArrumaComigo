@@ -1,6 +1,7 @@
-const CACHE = 'ac-v6'; // bump a cada deploy
+const CACHE = 'ac-v7'; // bump a cada deploy
 const SHELL = [
-  './', './index.html', './style.css', './manifest.json', './icon-192.png', './icon-512.png',
+  './', './index.html', './style.css', './manifest.json',
+  './icon-192.png', './icon-512.png', './apple-touch-icon.png',
   './fonts/fredoka.ttf', './fonts/nunito.ttf',
   './js/app.js', './js/api.js', './js/domain.js', './js/recurrence.js',
   './js/views/login.js', './js/views/today.js', './js/views/rooms.js',
