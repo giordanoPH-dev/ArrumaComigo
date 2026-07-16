@@ -1,4 +1,4 @@
-const CACHE = 'ac-v5'; // bump a cada deploy
+const CACHE = 'ac-v6'; // bump a cada deploy
 const SHELL = [
   './', './index.html', './style.css', './manifest.json', './icon-192.png', './icon-512.png',
   './fonts/fredoka.ttf', './fonts/nunito.ttf',
@@ -8,14 +8,33 @@ const SHELL = [
   './js/views/family.js',
 ];
 
-self.addEventListener('install', (e) =>
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))));
+// Assume o controle imediatamente (sem esperar todas as abas fecharem).
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+});
 
-self.addEventListener('activate', (e) =>
-  e.waitUntil(caches.keys().then((keys) =>
-    Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))));
+self.addEventListener('activate', (e) => e.waitUntil((async () => {
+  const keys = await caches.keys();
+  await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+  await self.clients.claim();
+})()));
 
+// Network-first no app shell: online mostra sempre a versão publicada; offline cai no cache.
+// Dados do Supabase nunca passam pelo cache.
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('supabase')) return; // dados sempre da rede
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request)));
+  const req = e.request;
+  if (req.method !== 'GET' || req.url.includes('supabase')) return;
+  e.respondWith((async () => {
+    try {
+      const fresh = await fetch(req);
+      const cache = await caches.open(CACHE);
+      cache.put(req, fresh.clone());
+      return fresh;
+    } catch {
+      const cached = await caches.match(req);
+      if (cached) return cached;
+      throw new Error('offline e sem cache');
+    }
+  })());
 });
