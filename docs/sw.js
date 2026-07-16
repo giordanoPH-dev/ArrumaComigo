@@ -1,4 +1,4 @@
-const CACHE = 'ac-v4'; // bump a cada deploy
+const CACHE = 'ac-v5'; // bump a cada deploy
 const SHELL = [
   './', './index.html', './style.css', './manifest.json', './icon-192.png', './icon-512.png',
   './fonts/fredoka.ttf', './fonts/nunito.ttf',

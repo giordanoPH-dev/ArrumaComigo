@@ -268,11 +268,11 @@ h2 { font-size: 1.2rem; font-weight: 500; margin: 4px 0 12px; }
   padding: 4px 8px;
   border-radius: 14px;
 }
-#nav a span { font-size: 1.3rem; }
+#nav a svg { width: 26px; height: 26px; }
 /* 6 itens apertam em telas estreitas */
 @media (max-width: 400px) {
   #nav a { font-size: 0.62rem; padding: 4px 3px; }
-  #nav a span { font-size: 1.15rem; }
+  #nav a svg { width: 23px; height: 23px; }
 }
 #nav a.active { color: var(--primary); background: var(--container); font-weight: 700; }
 
@@ -294,51 +294,106 @@ h2 { font-size: 1.2rem; font-weight: 500; margin: 4px 0 12px; }
 
 /* ---------- Aba Hoje ---------- */
 
-.week-tabs {
+/* Cabeçalho: "Hoje · qua., 15 de jul." + progresso por pessoa à direita. */
+.day-header {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 8px 2px 16px;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0 4px;
 }
-.day-tab {
-  flex: 1;
-  min-width: 44px;
+.day-title { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex: 1; }
+.day-title h1 { margin: 0; }
+.day-sub { color: var(--muted); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.day-progress {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Abas da semana e filtros: chips delineados (estilo Material FilterChip). */
+.day-row, .filters {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  border: none;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 2px;
+  scrollbar-width: none;
+}
+.day-row::-webkit-scrollbar, .filters::-webkit-scrollbar { display: none; }
+.filters { padding-bottom: 14px; }
+
+.day-chip, .filter-chip {
+  flex-shrink: 0;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 45%, transparent);
   border-radius: 16px;
-  padding: 8px 4px;
-  background: var(--bg);
+  padding: 9px 14px;
+  background: transparent;
   color: var(--ink);
   font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+  white-space: nowrap;
 }
-.day-tab strong { font-family: 'Fredoka', system-ui, sans-serif; font-weight: 500; font-size: 1.05rem; }
-.day-tab span { font-size: 0.7rem; color: inherit; }
-.day-tab em { font-size: 0.6rem; font-style: normal; }
+.day-chip.sel {
+  background: var(--container);
+  border-color: transparent;
+  color: var(--primary);
+  font-weight: 700;
+}
+/* Selects de filtro: seta ▾ desenhada, aparência nativa removida. */
+.filter-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236A6781' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 15px;
+}
+.filter-chip.on {
+  background-color: var(--container);
+  border-color: transparent;
+  color: var(--primary);
+}
+@media (prefers-color-scheme: dark) {
+  .filter-chip {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A9A4C2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+/* Cabeçalho de grupo (por pessoa) em Fredoka. */
+.group-header {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: var(--ink);
+  margin: 14px 0 12px;
+}
+.group-header:first-of-type { margin-top: 4px; }
 
 .task-card.done { opacity: 0.55; }
-.task-main { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+.card-row { display: flex; align-items: flex-start; gap: 12px; }
+.task-main { display: flex; align-items: flex-start; gap: 14px; cursor: pointer; flex: 1; min-width: 0; }
 .task-info { flex: 1; min-width: 0; }
-.task-title { font-weight: 500; font-size: 1.05rem; }
+.task-title { font-weight: 500; font-size: 1.1rem; line-height: 1.25; }
 .task-card.done .task-title { text-decoration: line-through; }
 .task-meta {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   margin-top: 6px;
 }
-.task-meta .prio, .task-meta span:not(.avatar) { font-weight: 600; }
-.overdue { color: var(--error); font-weight: 700; }
+.task-meta .due { color: var(--primary); font-weight: 700; }
+.task-meta .due.overdue { color: var(--error); }
+.task-meta .meta-ico { font-size: 0.85rem; opacity: 0.85; }
 .prio-HIGH { color: var(--error); }
 .prio-LOW { color: var(--muted); }
-.task-actions { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 6px; }
 
 .progress {
   height: 6px;
@@ -349,6 +404,57 @@ h2 { font-size: 1.2rem; font-weight: 500; margin: 4px 0 12px; }
   overflow: hidden;
 }
 .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; }
+.progress-fill.over { background: var(--error); }
+
+/* Coluna direita do card: avatar (troca responsável) + menu de ações ⊘. */
+.task-side { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; position: relative; }
+.avatar-btn { border: none; background: none; padding: 0; cursor: pointer; }
+.avatar-btn:disabled { cursor: default; }
+.avatar-empty { background: var(--bg) !important; color: var(--muted); }
+.icon-btn {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%;
+  background: var(--bg); color: var(--muted); cursor: pointer;
+  box-shadow: 4px 4px 8px var(--lo), -4px -4px 8px var(--hi);
+}
+.icon-btn:active { box-shadow: inset 3px 3px 6px var(--lo), inset -3px -3px 6px var(--hi); }
+
+.menu-wrap { position: relative; }
+.menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 190px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--bg);
+  box-shadow: 8px 8px 18px var(--lo), -8px -8px 18px var(--hi);
+}
+.menu.person-menu { top: auto; bottom: calc(100% + 6px); }
+.menu.open { display: block; }
+.menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 0.92rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.menu button:active { background: var(--container); }
+
+/* Estado vazio do dia. */
+.empty-day { text-align: center; margin: 48px 0; color: var(--ink); }
+.empty-day .empty-emoji { font-size: 3rem; }
+.empty-day p { margin: 8px 0 0; font-family: 'Fredoka', system-ui, sans-serif; font-size: 1.15rem; }
+.empty-day p.muted { font-family: 'Nunito', system-ui, sans-serif; font-size: 0.9rem; }
 
 /* Avatar: bolha neumórfica em relevo com gloss (como o PersonAvatar do app).
    A cor da pessoa vem inline via style="background:…". */

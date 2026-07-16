@@ -94,6 +94,11 @@ export async function uncompleteTask(completion, task) {
   }]);
 }
 
+/** Troca (ou remove) o responsável pela tarefa — troca pontual feita no cartão. */
+export async function reassignTask(task, personUuid) {
+  await upsert('tasks', [{ ...task, assigned_person_uuid: personUuid ?? null }]);
+}
+
 /** Pula a ocorrência atual (sem registrar conclusão). */
 export async function skipTask(task) {
   const from = maxDate(task.next_due_date, todayStr());
